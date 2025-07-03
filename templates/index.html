@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Photo Enhancer - Upload</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-magic me-2"></i>AI Photo Enhancer
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-upload me-1"></i>Upload
+                </a>
+                <a class="nav-link" href="{{ url_for('gallery') }}">
+                    <i class="fas fa-images me-1"></i>Gallery
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="text-center mb-5">
+                    <h1 class="display-4 mb-3">AI Photo Enhancer</h1>
+                    <p class="lead">Transform your photos with AI-powered enhancement for social media</p>
+                </div>
+
+                <div class="card shadow-lg">
+                    <div class="card-body p-5">
+                        <h2 class="card-title text-center mb-4">Upload Your Photo</h2>
+                        
+                        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-content">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <h4>Drag & drop your photo here</h4>
+                                    <p class="text-muted">or click to select a file</p>
+                                    <input type="file" name="file" id="fileInput" accept="image/*" required>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="mt-4">
+                            <h5>Supported formats:</h5>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge bg-secondary">JPG</span>
+                                <span class="badge bg-secondary">PNG</span>
+                                <span class="badge bg-secondary">GIF</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h5>AI Enhancement Features:</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-user-check text-primary me-2"></i>Face Enhancement</li>
+                                        <li><i class="fas fa-body text-primary me-2"></i>Body Contouring</li>
+                                        <li><i class="fas fa-palette text-primary me-2"></i>Skin Smoothing</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-tshirt text-primary me-2"></i>Clothing Enhancement</li>
+                                        <li><i class="fas fa-image text-primary me-2"></i>Background Optimization</li>
+                                        <li><i class="fas fa-adjust text-primary me-2"></i>Color Correction</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('gallery') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-images me-2"></i>View Gallery
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
