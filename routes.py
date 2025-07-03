@@ -46,9 +46,10 @@ def upload_file():
         flash('No file selected', 'error')
         return redirect(url_for('index'))
     
-    if file and allowed_file(file.filename):
+    if file and file.filename and allowed_file(file.filename):
         # Generate unique filename
-        filename = secure_filename(file.filename)
+        original_filename = file.filename
+        filename = secure_filename(original_filename)
         name, ext = os.path.splitext(filename)
         unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
         
@@ -63,10 +64,11 @@ def upload_file():
 
 @app.route('/api/enhance', methods=['POST'])
 def api_enhance():
-    """API endpoint to enhance an image"""
+    """API endpoint to enhance an image with AI"""
     data = request.get_json()
     filename = data.get('filename')
     enhancements = data.get('enhancements', {})
+    enhancement_prompt = data.get('enhancement_prompt', '')
     
     if not filename:
         return jsonify({'error': 'No filename provided'}), 400
@@ -76,17 +78,17 @@ def api_enhance():
         return jsonify({'error': 'Original image not found'}), 404
     
     try:
-        # Generate enhanced image
+        # Generate enhanced image with AI prompt
         enhanced_filename = f"enhanced_{filename}"
         enhanced_path = os.path.join(app.config['ENHANCED_FOLDER'], enhanced_filename)
         
-        success = enhance_image(original_path, enhanced_path, enhancements)
+        success = enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt)
         
         if success:
             return jsonify({
                 'success': True,
                 'enhanced_filename': enhanced_filename,
-                'message': 'Image enhanced successfully!'
+                'message': 'Image enhanced successfully with AI!'
             })
         else:
             return jsonify({'error': 'Enhancement failed'}), 500

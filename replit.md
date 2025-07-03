@@ -27,6 +27,7 @@ This is a Flask-based web application that provides AI-powered photo enhancement
 2. **main.py**: Entry point for running the application
 3. **routes.py**: URL routing and request handling logic
 4. **utils.py**: Image processing utilities and helper functions
+5. **ai_enhancer.py**: AI-powered enhancement service using OpenAI API
 
 ### Frontend Components
 1. **templates/index.html**: Main upload page with drag-and-drop functionality
@@ -39,7 +40,9 @@ This is a Flask-based web application that provides AI-powered photo enhancement
 ### Key Features
 - **File Upload**: Drag-and-drop and click-to-upload functionality
 - **Image Gallery**: Grid-based display of uploaded images with metadata
-- **Enhancement Engine**: Configurable image processing with PIL
+- **AI Enhancement Engine**: Real AI-powered enhancement using OpenAI API with DALL-E 3
+- **Text Prompt Interface**: Users can describe desired changes in natural language
+- **Fallback Processing**: Traditional PIL-based enhancement when AI is unavailable
 - **Comparison Tool**: Before/after slider for enhanced images
 - **Responsive Design**: Mobile-friendly interface
 
@@ -95,9 +98,11 @@ This is a Flask-based web application that provides AI-powered photo enhancement
 
 ### Environment Variables
 - `SESSION_SECRET`: Flask session secret key (defaults to development key)
+- `OPENAI_API_KEY`: OpenAI API key for AI-powered image enhancement features
 
 ## Changelog
 - July 03, 2025. Initial setup
+- July 03, 2025. Integrated real AI enhancement using OpenAI API with Stable Diffusion-style image generation, added text prompt functionality for custom enhancement descriptions
 
 ## User Preferences
 

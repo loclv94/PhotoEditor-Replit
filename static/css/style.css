@@ -145,6 +145,24 @@
     margin-bottom: 0.5rem;
 }
 
+/* AI Prompt styling */
+#enhancementPrompt {
+    border: 2px solid var(--bs-primary);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--bs-primary-bg-subtle);
+}
+
+#enhancementPrompt:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+#enhancementPrompt::placeholder {
+    color: var(--bs-secondary);
+    opacity: 0.8;
+}
+
 /* Loading States */
 .loading-spinner {
     display: none;

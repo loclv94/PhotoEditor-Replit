@@ -1,6 +1,7 @@
 import os
 from PIL import Image, ImageEnhance, ImageFilter
 from app import app
+from ai_enhancer import AIPhotoEnhancer
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -45,68 +46,37 @@ def get_all_images():
     
     return sorted(images, key=lambda x: x['filename'])
 
-def enhance_image(original_path, enhanced_path, enhancements):
+def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt=""):
     """
-    Apply AI-powered enhancements to an image (mocked for MVP)
+    Apply AI-powered enhancements to an image using Stable Diffusion
     
     Args:
         original_path: Path to original image
         enhanced_path: Path to save enhanced image
         enhancements: Dictionary of enhancement parameters
+        enhancement_prompt: User's text prompt for AI enhancement
         
     Returns:
         bool: True if successful, False otherwise
     """
     try:
-        with Image.open(original_path) as img:
-            # Convert to RGB if necessary
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            
-            enhanced = img.copy()
-            
-            # Mock AI enhancements based on parameters
-            face_enhancement = enhancements.get('face', 0)
-            body_enhancement = enhancements.get('body', 0)
-            skin_smoothing = enhancements.get('skin', 0)
-            brightness = enhancements.get('brightness', 0)
-            contrast = enhancements.get('contrast', 0)
-            saturation = enhancements.get('saturation', 0)
-            
-            # Apply brightness adjustment
-            if brightness != 0:
-                brightness_factor = 1 + (brightness / 100)
-                enhancer = ImageEnhance.Brightness(enhanced)
-                enhanced = enhancer.enhance(brightness_factor)
-            
-            # Apply contrast adjustment
-            if contrast != 0:
-                contrast_factor = 1 + (contrast / 100)
-                enhancer = ImageEnhance.Contrast(enhanced)
-                enhanced = enhancer.enhance(contrast_factor)
-            
-            # Apply saturation adjustment
-            if saturation != 0:
-                saturation_factor = 1 + (saturation / 100)
-                enhancer = ImageEnhance.Color(enhanced)
-                enhanced = enhancer.enhance(saturation_factor)
-            
-            # Apply skin smoothing (using blur filter as mock)
-            if skin_smoothing > 0:
-                blur_radius = skin_smoothing / 20  # Scale to reasonable blur radius
-                enhanced = enhanced.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-            
-            # Apply sharpening for face/body enhancement
-            if face_enhancement > 0 or body_enhancement > 0:
-                sharpness_factor = 1 + max(face_enhancement, body_enhancement) / 100
-                enhancer = ImageEnhance.Sharpness(enhanced)
-                enhanced = enhancer.enhance(sharpness_factor)
-            
-            # Save enhanced image
-            enhanced.save(enhanced_path, quality=95)
-            
+        # Initialize AI enhancer
+        ai_enhancer = AIPhotoEnhancer()
+        
+        # Use AI enhancement
+        success = ai_enhancer.enhance_image(
+            original_path, 
+            enhanced_path, 
+            enhancements, 
+            enhancement_prompt
+        )
+        
+        if success:
             app.logger.info(f"Enhanced image saved to {enhanced_path}")
             return True
+        else:
+            app.logger.error("Image enhancement failed")
+            return False
             
     except Exception as e:
         app.logger.error(f"Error enhancing image: {str(e)}")

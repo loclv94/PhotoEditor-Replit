@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const filename = document.getElementById('filename').value;
+            const enhancementPrompt = document.getElementById('enhancementPrompt').value;
             const enhancements = {
                 face: parseInt(document.getElementById('faceSlider').value),
                 body: parseInt(document.getElementById('bodySlider').value),
@@ -88,10 +89,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Show loading state
             const originalText = enhanceBtn.innerHTML;
-            enhanceBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+            enhanceBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing with AI...';
             enhanceBtn.disabled = true;
 
-            // Send enhancement request
+            // Send enhancement request with prompt
             fetch('/api/enhance', {
                 method: 'POST',
                 headers: {
@@ -99,7 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     filename: filename,
-                    enhancements: enhancements
+                    enhancements: enhancements,
+                    enhancement_prompt: enhancementPrompt
                 })
             })
             .then(response => response.json())
@@ -130,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Handle reset button
         if (resetBtn) {
             resetBtn.addEventListener('click', function() {
+                // Reset sliders
                 sliders.forEach(item => {
                     const slider = document.getElementById(item.slider);
                     const valueDisplay = document.getElementById(item.value);
@@ -141,6 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         valueDisplay.textContent = slider.value + item.suffix;
                     }
                 });
+                
+                // Reset prompt
+                const promptField = document.getElementById('enhancementPrompt');
+                if (promptField) {
+                    promptField.value = '';
+                }
             });
         }
     }
