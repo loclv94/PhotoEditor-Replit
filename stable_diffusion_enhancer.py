@@ -123,10 +123,11 @@ class StableDiffusionEnhancer:
         
         if not face_data or not face_data.get('has_face'):
             return mask
-            
-        face = face_data['primary_face']
-        cx, cy = face['center_x'], face['center_y']
-        fw, fh = face['width'], face['height']
+        
+        # Extract face data from the new structure
+        x1, y1, x2, y2 = face_data.get('face_box', (0, 0, 100, 100))
+        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+        fw, fh = face_data.get('face_width', 100), face_data.get('face_height', 100)
         
         if region_type == 'eyes':
             # Eye regions
@@ -152,16 +153,14 @@ class StableDiffusionEnhancer:
             
         elif region_type == 'face':
             # Entire face region
-            draw.ellipse([face['x'], face['y'], 
-                         face['x'] + face['width'], 
-                         face['y'] + face['height']], fill=255)
+            draw.ellipse([x1, y1, x2, y2], fill=255)
             
         elif region_type == 'hair':
             # Hair region (upper portion)
-            hair_y = face['y'] - int(fh * 0.3)
-            draw.ellipse([face['x'] - int(fw * 0.2), hair_y,
-                         face['x'] + face['width'] + int(fw * 0.2),
-                         face['y'] + int(fh * 0.3)], fill=255)
+            hair_y = y1 - int(fh * 0.3)
+            draw.ellipse([x1 - int(fw * 0.2), hair_y,
+                         x2 + int(fw * 0.2),
+                         y1 + int(fh * 0.3)], fill=255)
         
         # Apply blur for smooth edges
         mask = mask.filter(ImageFilter.GaussianBlur(radius=2))
@@ -755,69 +754,52 @@ class StableDiffusionEnhancer:
             image = Image.open(original_path).convert('RGB')
             enhanced_image = image.copy()
             
+            # Combine prompt enhancements with parameter enhancements
+            all_enhancements = enhancements.copy()
+            
             # Parse natural language prompt into specific enhancements
             if enhancement_prompt and enhancement_prompt.strip():
                 prompt_enhancements = self.parse_enhancement_prompt(enhancement_prompt)
-                
-                # Apply AI-style enhancements based on prompt
-                for enhancement_type, params in prompt_enhancements.items():
-                    if enhancement_type in self.feature_processors:
-                        try:
-                            if isinstance(params, str):
-                                enhanced_image = self.feature_processors[enhancement_type](enhanced_image, params)
-                            elif isinstance(params, (int, float)):
-                                enhanced_image = self.feature_processors[enhancement_type](enhanced_image, intensity=params)
-                            else:
-                                enhanced_image = self.feature_processors[enhancement_type](enhanced_image)
-                        except Exception as e:
-                            print(f"Error applying {enhancement_type}: {e}")
+                all_enhancements.update(prompt_enhancements)
             
-            # Apply all enhancement parameters
-            enhancement_mapping = {
-                # Facial Features
-                'eyeColor': ('eye_color', lambda x: x),
-                'eyeShape': ('eye_shape', lambda x: x),
-                'lipColor': ('lip_color', lambda x: x),
-                'faceShape': ('face_shape', lambda x: x),
-                
-                # Hair & Style
+            # Process facial features first (most critical)
+            facial_features = {
+                'eyeColor': 'eye_color',
+                'eyeShape': 'eye_shape', 
+                'lipColor': 'lip_color',
+                'faceShape': 'face_shape'
+            }
+            
+            print(f"Processing facial features...")
+            for param_name, feature_type in facial_features.items():
+                value = all_enhancements.get(param_name, '')
+                if value and value.strip():
+                    try:
+                        if feature_type in self.feature_processors:
+                            print(f"Applying {feature_type}: {value}")
+                            enhanced_image = self.feature_processors[feature_type](enhanced_image, value)
+                    except Exception as e:
+                        print(f"Error applying {param_name}: {e}")
+            
+            # Process other enhancements
+            other_mapping = {
                 'hairColor': ('hair_color', lambda x: x),
                 'hairStyle': ('hair_style', lambda x: x),
                 'makeup': ('makeup_application', lambda x: x if x != 'remove' else None),
-                
-                # Body & Posture
                 'height': ('height_adjustment', lambda x: x / 100.0),
                 'body': ('body_shape', lambda x: {'body': x}),
                 'posture': ('posture_correction', lambda x: x / 100.0),
-                
-                # Skin & Beauty
                 'blemish': ('blemish_removal', lambda x: x / 100.0),
                 'skinTone': ('skin_tone', lambda x: x),
                 'expression': ('expression_change', lambda x: x),
-                
-                # Environment & Style
                 'background': ('background_change', lambda x: x),
                 'lighting': ('lighting_enhancement', lambda x: x),
-                'clothing': ('clothing_change', lambda x: x),
-                
-                # Basic adjustments
-                'brightness': (None, lambda x: ImageEnhance.Brightness(enhanced_image).enhance(1 + x/100.0) if x != 0 else enhanced_image),
-                'contrast': (None, lambda x: ImageEnhance.Contrast(enhanced_image).enhance(1 + x/100.0) if x != 0 else enhanced_image),
-                'saturation': (None, lambda x: ImageEnhance.Color(enhanced_image).enhance(1 + x/100.0) if x != 0 else enhanced_image)
+                'clothing': ('clothing_change', lambda x: x)
             }
             
-            # Process makeup removal separately
-            if enhancements.get('makeup') == 'remove':
-                try:
-                    enhanced_image = self.remove_makeup(enhanced_image, 0.5)
-                except Exception as e:
-                    print(f"Error removing makeup: {e}")
-            
-            # Process all enhancement parameters
-            for param_name, (enhancement_type, processor) in enhancement_mapping.items():
-                value = enhancements.get(param_name, 0 if isinstance(enhancements.get(param_name, ''), (int, float)) else '')
+            for param_name, (enhancement_type, processor) in other_mapping.items():
+                value = all_enhancements.get(param_name, 0 if isinstance(all_enhancements.get(param_name, ''), (int, float)) else '')
                 
-                # Skip empty values
                 if not value or (isinstance(value, str) and value.strip() == ''):
                     continue
                     
@@ -826,13 +808,23 @@ class StableDiffusionEnhancer:
                         processed_value = processor(value)
                         if processed_value is not None:
                             enhanced_image = self.feature_processors[enhancement_type](enhanced_image, processed_value)
-                    else:
-                        # Handle basic image adjustments
-                        processed_result = processor(value)
-                        if isinstance(processed_result, Image.Image):
-                            enhanced_image = processed_result
                 except Exception as e:
                     print(f"Error applying {param_name}: {e}")
+            
+            # Apply basic image adjustments last
+            basic_adjustments = ['brightness', 'contrast', 'saturation']
+            for adjustment in basic_adjustments:
+                value = all_enhancements.get(adjustment, 0)
+                if isinstance(value, (int, float)) and value != 0:
+                    try:
+                        if adjustment == 'brightness':
+                            enhanced_image = ImageEnhance.Brightness(enhanced_image).enhance(1 + value/100.0)
+                        elif adjustment == 'contrast':
+                            enhanced_image = ImageEnhance.Contrast(enhanced_image).enhance(1 + value/100.0)
+                        elif adjustment == 'saturation':
+                            enhanced_image = ImageEnhance.Color(enhanced_image).enhance(1 + value/100.0)
+                    except Exception as e:
+                        print(f"Error applying {adjustment}: {e}")
             
             # Save enhanced image
             enhanced_image.save(enhanced_path, quality=95, optimize=True)
