@@ -735,30 +735,67 @@ class StableDiffusionEnhancer:
                         except Exception as e:
                             print(f"Error applying {enhancement_type}: {e}")
             
-            # Apply slider-based enhancements
-            slider_enhancements = {
-                'face': ('blemish_removal', lambda x: x / 100.0),
-                'skin': ('skin_tone', lambda x: 'natural' if x > 30 else None),
+            # Apply all enhancement parameters
+            enhancement_mapping = {
+                # Facial Features
+                'eyeColor': ('eye_color', lambda x: x),
+                'eyeShape': ('eye_shape', lambda x: x),
+                'lipColor': ('lip_color', lambda x: x),
+                'faceShape': ('face_shape', lambda x: x),
+                
+                # Hair & Style
+                'hairColor': ('hair_color', lambda x: x),
+                'hairStyle': ('hair_style', lambda x: x),
+                'makeup': ('makeup_application', lambda x: x if x != 'remove' else None),
+                
+                # Body & Posture
+                'height': ('height_adjustment', lambda x: x / 100.0),
                 'body': ('body_shape', lambda x: {'body': x}),
+                'posture': ('posture_correction', lambda x: x / 100.0),
+                
+                # Skin & Beauty
+                'blemish': ('blemish_removal', lambda x: x / 100.0),
+                'skinTone': ('skin_tone', lambda x: x),
+                'expression': ('expression_change', lambda x: x),
+                
+                # Environment & Style
+                'background': ('background_change', lambda x: x),
+                'lighting': ('lighting_enhancement', lambda x: x),
+                'clothing': ('clothing_change', lambda x: x),
+                
+                # Basic adjustments
                 'brightness': (None, lambda x: ImageEnhance.Brightness(enhanced_image).enhance(1 + x/100.0) if x != 0 else enhanced_image),
                 'contrast': (None, lambda x: ImageEnhance.Contrast(enhanced_image).enhance(1 + x/100.0) if x != 0 else enhanced_image),
                 'saturation': (None, lambda x: ImageEnhance.Color(enhanced_image).enhance(1 + x/100.0) if x != 0 else enhanced_image)
             }
             
-            for slider_name, (enhancement_type, processor) in slider_enhancements.items():
-                value = enhancements.get(slider_name, 0)
-                if value != 0:
-                    try:
-                        if enhancement_type and enhancement_type in self.feature_processors:
-                            processed_value = processor(value)
-                            if processed_value is not None:
-                                enhanced_image = self.feature_processors[enhancement_type](enhanced_image, processed_value)
-                        else:
-                            processed_result = processor(value)
-                            if isinstance(processed_result, Image.Image):
-                                enhanced_image = processed_result
-                    except Exception as e:
-                        print(f"Error applying {slider_name}: {e}")
+            # Process makeup removal separately
+            if enhancements.get('makeup') == 'remove':
+                try:
+                    enhanced_image = self.remove_makeup(enhanced_image, 0.5)
+                except Exception as e:
+                    print(f"Error removing makeup: {e}")
+            
+            # Process all enhancement parameters
+            for param_name, (enhancement_type, processor) in enhancement_mapping.items():
+                value = enhancements.get(param_name, 0 if isinstance(enhancements.get(param_name, ''), (int, float)) else '')
+                
+                # Skip empty values
+                if not value or (isinstance(value, str) and value.strip() == ''):
+                    continue
+                    
+                try:
+                    if enhancement_type and enhancement_type in self.feature_processors:
+                        processed_value = processor(value)
+                        if processed_value is not None:
+                            enhanced_image = self.feature_processors[enhancement_type](enhanced_image, processed_value)
+                    else:
+                        # Handle basic image adjustments
+                        processed_result = processor(value)
+                        if isinstance(processed_result, Image.Image):
+                            enhanced_image = processed_result
+                except Exception as e:
+                    print(f"Error applying {param_name}: {e}")
             
             # Save enhanced image
             enhanced_image.save(enhanced_path, quality=95, optimize=True)

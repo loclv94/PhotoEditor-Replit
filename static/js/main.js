@@ -50,12 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (enhanceForm) {
         // Initialize slider value displays
         const sliders = [
-            { slider: 'faceSlider', value: 'faceValue', suffix: '%' },
-            { slider: 'bodySlider', value: 'bodyValue', suffix: '%' },
-            { slider: 'skinSlider', value: 'skinValue', suffix: '%' },
             { slider: 'brightnessSlider', value: 'brightnessValue', suffix: '%' },
             { slider: 'contrastSlider', value: 'contrastValue', suffix: '%' },
-            { slider: 'saturationSlider', value: 'saturationValue', suffix: '%' }
+            { slider: 'saturationSlider', value: 'saturationValue', suffix: '%' },
+            { slider: 'heightSlider', value: 'heightValue', suffix: '%' },
+            { slider: 'bodySlider', value: 'bodyValue', suffix: '%' },
+            { slider: 'postureSlider', value: 'postureValue', suffix: '%' },
+            { slider: 'blemishSlider', value: 'blemishValue', suffix: '%' }
         ];
 
         sliders.forEach(item => {
@@ -79,12 +80,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const filename = document.getElementById('filename').value;
             const enhancementPrompt = document.getElementById('enhancementPrompt').value;
             const enhancements = {
-                face: parseInt(document.getElementById('faceSlider').value),
-                body: parseInt(document.getElementById('bodySlider').value),
-                skin: parseInt(document.getElementById('skinSlider').value),
+                // Basic sliders
                 brightness: parseInt(document.getElementById('brightnessSlider').value),
                 contrast: parseInt(document.getElementById('contrastSlider').value),
-                saturation: parseInt(document.getElementById('saturationSlider').value)
+                saturation: parseInt(document.getElementById('saturationSlider').value),
+                
+                // Body & Posture
+                height: parseInt(document.getElementById('heightSlider').value),
+                body: parseInt(document.getElementById('bodySlider').value),
+                posture: parseInt(document.getElementById('postureSlider').value),
+                
+                // Skin & Beauty
+                blemish: parseInt(document.getElementById('blemishSlider').value),
+                
+                // Facial Features
+                eyeColor: document.getElementById('eyeColor').value,
+                eyeShape: document.getElementById('eyeShape').value,
+                lipColor: document.getElementById('lipColor').value,
+                faceShape: document.getElementById('faceShape').value,
+                
+                // Hair & Style
+                hairColor: document.getElementById('hairColor').value,
+                hairStyle: document.getElementById('hairStyle').value,
+                makeup: document.getElementById('makeup').value,
+                
+                // Skin & Beauty
+                skinTone: document.getElementById('skinTone').value,
+                expression: document.getElementById('expression').value,
+                
+                // Environment & Style
+                background: document.getElementById('background').value,
+                lighting: document.getElementById('lighting').value,
+                clothing: document.getElementById('clothing').value
             };
 
             // Show loading state

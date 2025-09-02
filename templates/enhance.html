@@ -50,44 +50,246 @@
                         <form id="enhanceForm">
                             <input type="hidden" id="filename" value="{{ original_filename }}">
                             
+                            <!-- AI Prompt Section -->
                             <div class="mb-4">
-                                <label class="form-label">
+                                <label for="enhancementPrompt" class="form-label">
                                     <i class="fas fa-magic me-2"></i>AI Enhancement Prompt
                                 </label>
-                                <textarea class="form-control" id="enhancementPrompt" rows="3" 
-                                         placeholder="Describe what you want to enhance: e.g., 'Make skin smoother, enhance facial features, improve lighting, change background to beach sunset'"></textarea>
-                                <div class="form-text">
-                                    <strong>Examples:</strong> "Professional headshot with soft lighting" • "Make skin flawless and enhance eye color" • "Change background to luxury studio"
+                                <textarea class="form-control" id="enhancementPrompt" rows="2" 
+                                         placeholder="Describe changes: 'Make eyes blue, smooth skin, change background'"></textarea>
+                            </div>
+
+                            <!-- Facial Features Section -->
+                            <div class="enhancement-section mb-4">
+                                <h6 class="text-primary mb-3"><i class="fas fa-user-circle me-2"></i>Facial Features</h6>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Eye Color</label>
+                                        <select class="form-select form-select-sm" id="eyeColor">
+                                            <option value="">Original</option>
+                                            <option value="blue">Blue</option>
+                                            <option value="green">Green</option>
+                                            <option value="brown">Brown</option>
+                                            <option value="gray">Gray</option>
+                                            <option value="hazel">Hazel</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Eye Shape</label>
+                                        <select class="form-select form-select-sm" id="eyeShape">
+                                            <option value="">Natural</option>
+                                            <option value="almond">Almond</option>
+                                            <option value="round">Round</option>
+                                            <option value="cat">Cat Eye</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Lip Color</label>
+                                        <select class="form-select form-select-sm" id="lipColor">
+                                            <option value="">Natural</option>
+                                            <option value="rose">Rose</option>
+                                            <option value="red">Red</option>
+                                            <option value="pink">Pink</option>
+                                            <option value="coral">Coral</option>
+                                            <option value="nude">Nude</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Face Shape</label>
+                                        <select class="form-select form-select-sm" id="faceShape">
+                                            <option value="">Natural</option>
+                                            <option value="oval">Oval</option>
+                                            <option value="heart">Heart</option>
+                                            <option value="square">Square</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Face Enhancement</label>
-                                <input type="range" class="form-range" id="faceSlider" min="0" max="100" value="0">
-                                <div class="d-flex justify-content-between small text-muted">
-                                    <span>0%</span>
-                                    <span id="faceValue">0%</span>
-                                    <span>100%</span>
+                            <!-- Hair & Style Section -->
+                            <div class="enhancement-section mb-4">
+                                <h6 class="text-success mb-3"><i class="fas fa-cut me-2"></i>Hair & Style</h6>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Hair Color</label>
+                                        <select class="form-select form-select-sm" id="hairColor">
+                                            <option value="">Original</option>
+                                            <option value="blonde">Blonde</option>
+                                            <option value="brunette">Brunette</option>
+                                            <option value="black">Black</option>
+                                            <option value="red">Red</option>
+                                            <option value="auburn">Auburn</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Hair Style</label>
+                                        <select class="form-select form-select-sm" id="hairStyle">
+                                            <option value="">Natural</option>
+                                            <option value="straight">Straight</option>
+                                            <option value="wavy">Wavy</option>
+                                            <option value="curly">Curly</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Makeup</label>
+                                    <select class="form-select form-select-sm" id="makeup">
+                                        <option value="">No Change</option>
+                                        <option value="natural">Natural</option>
+                                        <option value="glamour">Glamour</option>
+                                        <option value="remove">Remove Makeup</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Body Contouring</label>
-                                <input type="range" class="form-range" id="bodySlider" min="0" max="100" value="0">
-                                <div class="d-flex justify-content-between small text-muted">
-                                    <span>0%</span>
-                                    <span id="bodyValue">0%</span>
-                                    <span>100%</span>
+                            <!-- Body & Posture Section -->
+                            <div class="enhancement-section mb-4">
+                                <h6 class="text-warning mb-3"><i class="fas fa-male me-2"></i>Body & Posture</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small">Height Adjustment</label>
+                                    <input type="range" class="form-range" id="heightSlider" min="-20" max="20" value="0">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>Shorter</span>
+                                        <span id="heightValue">0%</span>
+                                        <span>Taller</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Body Shape</label>
+                                    <input type="range" class="form-range" id="bodySlider" min="-30" max="30" value="0">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>Slimmer</span>
+                                        <span id="bodyValue">0%</span>
+                                        <span>Fuller</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Posture</label>
+                                    <input type="range" class="form-range" id="postureSlider" min="0" max="50" value="0">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>Natural</span>
+                                        <span id="postureValue">0%</span>
+                                        <span>Corrected</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Skin Smoothing</label>
-                                <input type="range" class="form-range" id="skinSlider" min="0" max="100" value="0">
-                                <div class="d-flex justify-content-between small text-muted">
-                                    <span>0%</span>
-                                    <span id="skinValue">0%</span>
-                                    <span>100%</span>
+                            <!-- Skin & Beauty Section -->
+                            <div class="enhancement-section mb-4">
+                                <h6 class="text-info mb-3"><i class="fas fa-spa me-2"></i>Skin & Beauty</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small">Blemish Removal</label>
+                                    <input type="range" class="form-range" id="blemishSlider" min="0" max="100" value="0">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>0%</span>
+                                        <span id="blemishValue">0%</span>
+                                        <span>100%</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Skin Tone</label>
+                                    <select class="form-select form-select-sm" id="skinTone">
+                                        <option value="">Natural</option>
+                                        <option value="warmer">Warmer</option>
+                                        <option value="cooler">Cooler</option>
+                                        <option value="even">Even Tone</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Expression</label>
+                                    <select class="form-select form-select-sm" id="expression">
+                                        <option value="">Natural</option>
+                                        <option value="smile">Enhanced Smile</option>
+                                        <option value="confident">Confident</option>
+                                        <option value="friendly">Friendly</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Environment Section -->
+                            <div class="enhancement-section mb-4">
+                                <h6 class="text-secondary mb-3"><i class="fas fa-image me-2"></i>Environment & Style</h6>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Background</label>
+                                        <select class="form-select form-select-sm" id="background">
+                                            <option value="">Original</option>
+                                            <option value="studio background">Studio</option>
+                                            <option value="nature background">Nature</option>
+                                            <option value="beach background">Beach</option>
+                                            <option value="city background">Urban</option>
+                                            <option value="sunset background">Sunset</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Lighting</label>
+                                        <select class="form-select form-select-sm" id="lighting">
+                                            <option value="">Natural</option>
+                                            <option value="soft">Soft Light</option>
+                                            <option value="dramatic">Dramatic</option>
+                                            <option value="professional">Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Clothing Style</label>
+                                    <select class="form-select form-select-sm" id="clothing">
+                                        <option value="">Original</option>
+                                        <option value="elegant dress">Elegant</option>
+                                        <option value="casual outfit">Casual</option>
+                                        <option value="formal attire">Formal</option>
+                                        <option value="dark clothing">Dark Colors</option>
+                                        <option value="bright clothing">Bright Colors</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Basic Adjustments Section -->
+                            <div class="enhancement-section mb-4">
+                                <h6 class="text-dark mb-3"><i class="fas fa-sliders-h me-2"></i>Basic Adjustments</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small">Brightness</label>
+                                    <input type="range" class="form-range" id="brightnessSlider" min="-50" max="50" value="0">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>-50%</span>
+                                        <span id="brightnessValue">0%</span>
+                                        <span>+50%</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Contrast</label>
+                                    <input type="range" class="form-range" id="contrastSlider" min="-50" max="50" value="0">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>-50%</span>
+                                        <span id="contrastValue">0%</span>
+                                        <span>+50%</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Saturation</label>
+                                    <input type="range" class="form-range" id="saturationSlider" min="-50" max="50" value="0">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>-50%</span>
+                                        <span id="saturationValue">0%</span>
+                                        <span>+50%</span>
+                                    </div>
                                 </div>
                             </div>
 
