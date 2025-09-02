@@ -27,7 +27,7 @@ This is a Flask-based web application that provides AI-powered photo enhancement
 2. **main.py**: Entry point for running the application
 3. **routes.py**: URL routing and request handling logic
 4. **utils.py**: Image processing utilities and helper functions
-5. **ai_enhancer.py**: AI-powered enhancement service using OpenAI API
+5. **stable_diffusion_enhancer.py**: ComfyUI + Stable Diffusion + LoRA enhancement engine
 
 ### Frontend Components
 1. **templates/index.html**: Main upload page with drag-and-drop functionality
@@ -40,8 +40,19 @@ This is a Flask-based web application that provides AI-powered photo enhancement
 ### Key Features
 - **File Upload**: Drag-and-drop and click-to-upload functionality
 - **Image Gallery**: Grid-based display of uploaded images with metadata
-- **AI Enhancement Engine**: Real AI-powered enhancement using OpenAI API with DALL-E 3
-- **Text Prompt Interface**: Users can describe desired changes in natural language
+- **Advanced AI Enhancement Engine**: ComfyUI + Stable Diffusion + LoRA-based processing
+- **Comprehensive Feature Set**: 15+ enhancement capabilities including:
+  - Eye color and shape adjustment
+  - Face shape modification
+  - Hair color, style, and length changes
+  - Lip shape and color enhancement
+  - Height adjustment with pose AI
+  - Body shape and proportion adjustment
+  - Background changes or replacement
+  - Skin tone correction and blemish removal
+  - Expression and makeup changes
+  - Lighting and clothing modifications
+- **Natural Language Processing**: AI prompt parsing for intuitive enhancement requests
 - **Fallback Processing**: Traditional PIL-based enhancement when AI is unavailable
 - **Comparison Tool**: Before/after slider for enhanced images
 - **Responsive Design**: Mobile-friendly interface
@@ -98,11 +109,12 @@ This is a Flask-based web application that provides AI-powered photo enhancement
 
 ### Environment Variables
 - `SESSION_SECRET`: Flask session secret key (defaults to development key)
-- `OPENAI_API_KEY`: OpenAI API key for AI-powered image enhancement features
+- `OPENAI_API_KEY`: OpenAI API key (legacy, kept for backward compatibility)
 
 ## Changelog
 - July 03, 2025. Initial setup
 - July 03, 2025. Integrated real AI enhancement using OpenAI API with Stable Diffusion-style image generation, added text prompt functionality for custom enhancement descriptions
+- September 02, 2025. **Major Architecture Overhaul**: Replaced OpenAI-based enhancement with ComfyUI + Stable Diffusion + LoRA system. Implemented 15+ professional photo editing features including eye color/shape adjustment, face modification, hair styling, body proportions, background replacement, skin correction, makeup application, and advanced lighting controls. Added natural language prompt parsing for intuitive enhancement requests.
 
 ## User Preferences
 

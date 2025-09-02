@@ -1,7 +1,7 @@
 import os
 from PIL import Image, ImageEnhance, ImageFilter
 from app import app
-from ai_enhancer import AIPhotoEnhancer
+from stable_diffusion_enhancer import StableDiffusionEnhancer
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -60,11 +60,11 @@ def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt
         bool: True if successful, False otherwise
     """
     try:
-        # Initialize AI enhancer
-        ai_enhancer = AIPhotoEnhancer()
+        # Initialize ComfyUI-style enhancer
+        enhancer = StableDiffusionEnhancer()
         
-        # Use AI enhancement
-        success = ai_enhancer.enhance_image(
+        # Use advanced AI enhancement
+        success = enhancer.enhance_image(
             original_path, 
             enhanced_path, 
             enhancements, 
