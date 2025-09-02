@@ -166,37 +166,95 @@ class StableDiffusionEnhancer:
         mask = mask.filter(ImageFilter.GaussianBlur(radius=2))
         return mask
     
-    def enhance_eye_color(self, image, color="blue", intensity=0.5):
-        """Enhance or change eye color"""
+    def enhance_eye_color(self, image, color="blue", intensity=0.7):
+        """Change eye color using HSV-based realistic modification with iris detection"""
         try:
-            face_data = self.detect_face_regions(image)
-            if not face_data.get('has_face'):
-                return image
-                
-            eye_mask = self.create_region_mask(image, 'eyes', face_data)
+            import cv2
+            # Convert to OpenCV format
+            img_array = np.array(image)
+            img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
             
-            # Create color overlay
-            color_map = {
-                'blue': (100, 149, 237),
-                'green': (46, 139, 87),
-                'brown': (139, 69, 19),
-                'gray': (128, 128, 128),
-                'hazel': (139, 117, 0)
+            # Detect face and eyes  
+            face_data = self.detect_face_regions(image)
+            if not face_data or not face_data.get('eyes'):
+                print("No eyes detected for color change")
+                return image
+            
+            enhanced_bgr = img_bgr.copy()
+            
+            # HSV hue values for natural eye colors
+            color_hues = {
+                'blue': 110, 'green': 60, 'brown': 15, 'hazel': 35, 
+                'gray': 120, 'amber': 25, 'violet': 140
             }
             
-            eye_color = color_map.get(color.lower(), color_map['blue'])
-            color_overlay = Image.new('RGB', image.size, eye_color)
+            if color not in color_hues:
+                print(f"Unsupported eye color: {color}")
+                return image
+                
+            target_hue = color_hues[color]
             
-            # Apply color with mask
-            enhanced = Image.composite(color_overlay, image, eye_mask)
+            # Process each detected eye
+            for eye_info in face_data['eyes']:
+                cx, cy, ew, eh = eye_info
+                
+                # Extract eye region with padding
+                padding = max(5, min(ew, eh) // 4)
+                y1 = max(0, cy - eh//2 - padding)
+                y2 = min(enhanced_bgr.shape[0], cy + eh//2 + padding) 
+                x1 = max(0, cx - ew//2 - padding)
+                x2 = min(enhanced_bgr.shape[1], cx + ew//2 + padding)
+                
+                eye_region = enhanced_bgr[y1:y2, x1:x2]
+                if eye_region.size == 0:
+                    continue
+                
+                # Convert eye region to HSV
+                eye_hsv = cv2.cvtColor(eye_region, cv2.COLOR_BGR2HSV)
+                eye_gray = cv2.cvtColor(eye_region, cv2.COLOR_BGR2GRAY)
+                
+                # Create iris mask (exclude pupil and sclera)
+                # Iris detection: moderate brightness, some saturation
+                lower_iris = np.array([0, 30, 40])   # Allow all hues, some saturation, not too dark
+                upper_iris = np.array([179, 255, 180])  # Exclude very bright areas (sclera)
+                iris_mask = cv2.inRange(eye_hsv, lower_iris, upper_iris)
+                
+                # Remove pupil (darkest regions)
+                _, pupil_mask = cv2.threshold(eye_gray, 30, 255, cv2.THRESH_BINARY_INV)
+                pupil_mask = cv2.morphologyEx(pupil_mask, cv2.MORPH_CLOSE, np.ones((3,3), np.uint8))
+                
+                # Final iris mask (exclude pupil)
+                iris_only = cv2.bitwise_and(iris_mask, cv2.bitwise_not(pupil_mask))
+                
+                # Apply morphological operations for cleaner mask
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+                iris_only = cv2.morphologyEx(iris_only, cv2.MORPH_CLOSE, kernel)
+                iris_only = cv2.morphologyEx(iris_only, cv2.MORPH_OPEN, kernel)
+                
+                # Gaussian blur for soft edges
+                iris_mask_float = cv2.GaussianBlur(iris_only.astype(np.float32), (5, 5), 1.0) / 255.0
+                
+                # Change hue while preserving saturation and value (natural texture)
+                new_eye_hsv = eye_hsv.copy()
+                
+                # Blend hue: preserve original texture while shifting color
+                original_hue = eye_hsv[:,:,0].astype(np.float32)
+                new_hue = np.full_like(original_hue, target_hue)
+                blended_hue = (original_hue * (1 - iris_mask_float * intensity) + 
+                              new_hue * iris_mask_float * intensity)
+                
+                new_eye_hsv[:,:,0] = np.clip(blended_hue, 0, 179).astype(np.uint8)
+                
+                # Convert back and apply to original
+                new_eye_bgr = cv2.cvtColor(new_eye_hsv, cv2.COLOR_HSV2BGR)
+                enhanced_bgr[y1:y2, x1:x2] = new_eye_bgr
             
-            # Blend with original based on intensity
-            enhanced = Image.blend(image, enhanced, intensity)
-            
-            return enhanced
+            # Convert back to PIL format
+            enhanced_rgb = cv2.cvtColor(enhanced_bgr, cv2.COLOR_BGR2RGB)
+            return Image.fromarray(enhanced_rgb)
             
         except Exception as e:
-            print(f"Eye color enhancement error: {e}")
+            print(f"Natural eye color change error: {e}")
             return image
     
     def enhance_eye_shape(self, image, shape="almond", intensity=0.3):
@@ -330,29 +388,95 @@ class StableDiffusionEnhancer:
             print(f"Lip shape enhancement error: {e}")
             return image
     
-    def enhance_lip_color(self, image, color="rose", intensity=0.5):
-        """Change or enhance lip color"""
+    def enhance_lip_color(self, image, color="rose", intensity=0.6):
+        """Change lip color using natural HSV-based blending while preserving texture"""
         try:
+            import cv2
+            # Convert to OpenCV format
+            img_array = np.array(image)
+            img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+            
             face_data = self.detect_face_regions(image)
             if not face_data.get('has_face'):
                 return image
+            
+            # Get lip region from face detection
+            lip_pos = face_data.get('lips', (0, 0))
+            if isinstance(lip_pos, tuple) and len(lip_pos) == 2:
+                lx, ly = lip_pos
                 
-            lip_mask = self.create_region_mask(image, 'lips', face_data)
+                # Create lip region
+                face_width = face_data.get('face_width', 100)
+                lip_width = int(face_width * 0.25)
+                lip_height = int(face_width * 0.12)
+                
+                y1 = max(0, ly - lip_height//2)
+                y2 = min(img_bgr.shape[0], ly + lip_height//2)
+                x1 = max(0, lx - lip_width//2)
+                x2 = min(img_bgr.shape[1], lx + lip_width//2)
+                
+                lip_region = img_bgr[y1:y2, x1:x2]
+                
+                if lip_region.size > 0:
+                    # Convert to HSV for natural color manipulation
+                    lip_hsv = cv2.cvtColor(lip_region, cv2.COLOR_BGR2HSV)
+                    lip_gray = cv2.cvtColor(lip_region, cv2.COLOR_BGR2GRAY)
+                    
+                    # Create lip mask based on color characteristics
+                    # Lips typically have some saturation and medium brightness
+                    lower_lip = np.array([0, 20, 50])    # Any hue, some saturation, not too dark
+                    upper_lip = np.array([179, 255, 220])  # Exclude very bright areas
+                    lip_mask = cv2.inRange(lip_hsv, lower_lip, upper_lip)
+                    
+                    # Remove very dark areas (teeth gaps, shadows)
+                    _, dark_mask = cv2.threshold(lip_gray, 40, 255, cv2.THRESH_BINARY)
+                    lip_mask = cv2.bitwise_and(lip_mask, dark_mask)
+                    
+                    # Morphological operations for smooth mask
+                    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+                    lip_mask = cv2.morphologyEx(lip_mask, cv2.MORPH_CLOSE, kernel)
+                    lip_mask = cv2.morphologyEx(lip_mask, cv2.MORPH_OPEN, kernel)
+                    
+                    # Gaussian blur for natural edges
+                    lip_mask_float = cv2.GaussianBlur(lip_mask.astype(np.float32), (3, 3), 0.5) / 255.0
+                    
+                    # HSV hue values for natural lip colors
+                    color_hues = {
+                        'rose': 350, 'red': 0, 'pink': 330, 'coral': 15, 
+                        'berry': 320, 'nude': 30, 'plum': 300, 'cherry': 5
+                    }
+                    
+                    if color.lower() in color_hues:
+                        target_hue = color_hues[color.lower()]
+                        # Convert OpenCV hue range (0-179) 
+                        target_hue_cv = int(target_hue * 179 / 360) if target_hue <= 360 else target_hue
+                        
+                        # Enhance saturation for more vibrant color
+                        enhanced_hsv = lip_hsv.copy()
+                        
+                        # Apply hue change with texture preservation
+                        original_hue = lip_hsv[:,:,0].astype(np.float32)
+                        new_hue = np.full_like(original_hue, target_hue_cv)
+                        blended_hue = (original_hue * (1 - lip_mask_float * intensity) + 
+                                      new_hue * lip_mask_float * intensity)
+                        enhanced_hsv[:,:,0] = np.clip(blended_hue, 0, 179).astype(np.uint8)
+                        
+                        # Slightly increase saturation for more vivid color
+                        original_sat = lip_hsv[:,:,1].astype(np.float32)
+                        enhanced_sat = np.minimum(255, original_sat * (1 + lip_mask_float * intensity * 0.3))
+                        enhanced_hsv[:,:,1] = enhanced_sat.astype(np.uint8)
+                        
+                        # Convert back and replace region
+                        enhanced_lip_bgr = cv2.cvtColor(enhanced_hsv, cv2.COLOR_HSV2BGR)
+                        img_bgr[y1:y2, x1:x2] = enhanced_lip_bgr
             
-            # Lip color mapping
-            color_map = {
-                'rose': (255, 182, 193),
-                'red': (220, 20, 60),
-                'pink': (255, 192, 203),
-                'coral': (255, 127, 80),
-                'berry': (139, 0, 139),
-                'nude': (222, 184, 135)
-            }
+            # Convert back to PIL format
+            enhanced_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            return Image.fromarray(enhanced_rgb)
             
-            lip_color = color_map.get(color.lower(), color_map['rose'])
-            color_overlay = Image.new('RGB', image.size, lip_color)
-            
-            # Apply color with mask
+        except Exception as e:
+            print(f"Natural lip color change error: {e}")
+            return image
             enhanced = Image.composite(color_overlay, image, lip_mask)
             enhanced = Image.blend(image, enhanced, intensity)
             
