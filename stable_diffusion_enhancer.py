@@ -60,24 +60,38 @@ class StableDiffusionEnhancer:
             face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
             eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
             
-            # Detect faces
-            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+            # Detect faces with stricter parameters
+            faces = face_cascade.detectMultiScale(gray, 1.2, 6, minSize=(50, 50))
             
             if len(faces) > 0:
                 # Take the largest face
                 face = max(faces, key=lambda rect: rect[2] * rect[3])
                 x, y, w, h = face
                 
-                # Extract face region for eye detection
-                roi_gray = gray[y:y+h, x:x+w]
-                eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 4)
+                # More precise eye detection within upper half of face
+                eye_region_y = y + int(h * 0.15)  # Start from upper face area
+                eye_region_h = int(h * 0.4)       # Only upper 40% of face
+                roi_gray = gray[eye_region_y:eye_region_y+eye_region_h, x:x+w]
                 
-                # Convert eye coordinates to full image coordinates
+                # Use stricter eye detection parameters
+                eyes = eye_cascade.detectMultiScale(roi_gray, 1.15, 5, minSize=(15, 10), maxSize=(int(w*0.3), int(h*0.2)))
+                
+                # Filter and refine eye coordinates
                 eye_coords = []
                 for (ex, ey, ew, eh) in eyes:
-                    eye_center_x = x + ex + ew//2
-                    eye_center_y = y + ey + eh//2
-                    eye_coords.append((eye_center_x, eye_center_y, ew, eh))
+                    # Convert to full image coordinates
+                    abs_x = x + ex
+                    abs_y = eye_region_y + ey
+                    
+                    # Validate eye region (basic aspect ratio and position check)
+                    aspect_ratio = ew / eh if eh > 0 else 0
+                    if 1.5 <= aspect_ratio <= 4.0:  # Reasonable eye aspect ratio
+                        # Use smaller, more precise eye region focused on iris area
+                        iris_x = abs_x + int(ew * 0.25)  # Move inward from eye corners
+                        iris_y = abs_y + int(eh * 0.2)   # Slightly down from top
+                        iris_w = int(ew * 0.5)           # Half the detected eye width
+                        iris_h = int(eh * 0.6)           # 60% of detected eye height
+                        eye_coords.append((iris_x + iris_w//2, iris_y + iris_h//2, iris_w, iris_h))
                 
                 return {
                     'has_face': True,
@@ -194,60 +208,89 @@ class StableDiffusionEnhancer:
                 
             target_hue = color_hues[color]
             
+            print(f"Processing {len(face_data['eyes'])} detected eye regions")
+            
             # Process each detected eye
-            for eye_info in face_data['eyes']:
+            for i, eye_info in enumerate(face_data['eyes']):
                 cx, cy, ew, eh = eye_info
+                print(f"Eye {i}: center=({cx},{cy}), size=({ew}x{eh})")
                 
-                # Extract eye region with padding
-                padding = max(5, min(ew, eh) // 4)
-                y1 = max(0, cy - eh//2 - padding)
-                y2 = min(enhanced_bgr.shape[0], cy + eh//2 + padding) 
-                x1 = max(0, cx - ew//2 - padding)
-                x2 = min(enhanced_bgr.shape[1], cx + ew//2 + padding)
+                # Extract precise iris region (no padding to avoid excess area)
+                y1 = max(0, cy - eh//2)
+                y2 = min(enhanced_bgr.shape[0], cy + eh//2) 
+                x1 = max(0, cx - ew//2)
+                x2 = min(enhanced_bgr.shape[1], cx + ew//2)
                 
                 eye_region = enhanced_bgr[y1:y2, x1:x2]
-                if eye_region.size == 0:
+                if eye_region.size == 0 or eye_region.shape[0] < 5 or eye_region.shape[1] < 5:
+                    print(f"Eye {i}: region too small, skipping")
                     continue
+                
+                print(f"Eye {i}: processing region {eye_region.shape}")
                 
                 # Convert eye region to HSV
                 eye_hsv = cv2.cvtColor(eye_region, cv2.COLOR_BGR2HSV)
                 eye_gray = cv2.cvtColor(eye_region, cv2.COLOR_BGR2GRAY)
                 
-                # Create iris mask (exclude pupil and sclera)
-                # Iris detection: moderate brightness, some saturation
-                lower_iris = np.array([0, 30, 40])   # Allow all hues, some saturation, not too dark
-                upper_iris = np.array([179, 255, 180])  # Exclude very bright areas (sclera)
+                # More aggressive iris detection
+                # Focus on colored areas (iris) excluding very bright (sclera) and very dark (pupil)
+                lower_iris = np.array([0, 15, 30])    # Lower saturation threshold, allow darker areas
+                upper_iris = np.array([179, 255, 160]) # Exclude bright sclera
                 iris_mask = cv2.inRange(eye_hsv, lower_iris, upper_iris)
                 
-                # Remove pupil (darkest regions)
-                _, pupil_mask = cv2.threshold(eye_gray, 30, 255, cv2.THRESH_BINARY_INV)
-                pupil_mask = cv2.morphologyEx(pupil_mask, cv2.MORPH_CLOSE, np.ones((3,3), np.uint8))
+                # Create pupil mask (very dark center areas)
+                _, pupil_mask = cv2.threshold(eye_gray, 25, 255, cv2.THRESH_BINARY_INV)
                 
-                # Final iris mask (exclude pupil)
-                iris_only = cv2.bitwise_and(iris_mask, cv2.bitwise_not(pupil_mask))
+                # Create sclera mask (very bright areas) 
+                _, sclera_mask = cv2.threshold(eye_gray, 180, 255, cv2.THRESH_BINARY)
                 
-                # Apply morphological operations for cleaner mask
-                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-                iris_only = cv2.morphologyEx(iris_only, cv2.MORPH_CLOSE, kernel)
-                iris_only = cv2.morphologyEx(iris_only, cv2.MORPH_OPEN, kernel)
+                # Combine masks: exclude pupil and sclera from iris
+                combined_exclusion = cv2.bitwise_or(pupil_mask, sclera_mask)
+                iris_only = cv2.bitwise_and(iris_mask, cv2.bitwise_not(combined_exclusion))
                 
-                # Gaussian blur for soft edges
-                iris_mask_float = cv2.GaussianBlur(iris_only.astype(np.float32), (5, 5), 1.0) / 255.0
+                # Morphological operations to clean up the mask
+                kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+                kernel_med = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
                 
-                # Change hue while preserving saturation and value (natural texture)
+                # Close small gaps
+                iris_only = cv2.morphologyEx(iris_only, cv2.MORPH_CLOSE, kernel_small)
+                # Remove noise
+                iris_only = cv2.morphologyEx(iris_only, cv2.MORPH_OPEN, kernel_small)
+                # Final cleanup
+                iris_only = cv2.morphologyEx(iris_only, cv2.MORPH_CLOSE, kernel_med)
+                
+                # Check if we have valid iris pixels
+                iris_pixel_count = np.sum(iris_only > 0)
+                total_pixels = eye_region.shape[0] * eye_region.shape[1]
+                iris_ratio = iris_pixel_count / total_pixels if total_pixels > 0 else 0
+                
+                print(f"Eye {i}: iris pixels={iris_pixel_count}/{total_pixels} ({iris_ratio:.2%})")
+                
+                if iris_pixel_count < 5:  # Need minimum iris pixels
+                    print(f"Eye {i}: insufficient iris pixels, skipping")
+                    continue
+                
+                # Create smooth mask for blending
+                iris_mask_float = cv2.GaussianBlur(iris_only.astype(np.float32), (3, 3), 0.5) / 255.0
+                
+                # Apply HSV color change only to iris pixels
                 new_eye_hsv = eye_hsv.copy()
                 
-                # Blend hue: preserve original texture while shifting color
-                original_hue = eye_hsv[:,:,0].astype(np.float32)
-                new_hue = np.full_like(original_hue, target_hue)
-                blended_hue = (original_hue * (1 - iris_mask_float * intensity) + 
-                              new_hue * iris_mask_float * intensity)
-                
-                new_eye_hsv[:,:,0] = np.clip(blended_hue, 0, 179).astype(np.uint8)
+                # More aggressive hue replacement for visible color change
+                mask_active = iris_mask_float > 0.1
+                if np.any(mask_active):
+                    # Set new hue directly for iris pixels
+                    new_eye_hsv[mask_active, 0] = target_hue
+                    
+                    # Enhance saturation slightly for more vibrant color
+                    current_sat = new_eye_hsv[mask_active, 1].astype(np.float32)
+                    enhanced_sat = np.minimum(255, current_sat * 1.2)
+                    new_eye_hsv[mask_active, 1] = enhanced_sat.astype(np.uint8)
                 
                 # Convert back and apply to original
                 new_eye_bgr = cv2.cvtColor(new_eye_hsv, cv2.COLOR_HSV2BGR)
                 enhanced_bgr[y1:y2, x1:x2] = new_eye_bgr
+                print(f"Eye {i}: color change applied")
             
             # Convert back to PIL format
             enhanced_rgb = cv2.cvtColor(enhanced_bgr, cv2.COLOR_BGR2RGB)
