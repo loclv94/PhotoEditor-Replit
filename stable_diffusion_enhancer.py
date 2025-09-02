@@ -60,38 +60,44 @@ class StableDiffusionEnhancer:
             face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
             eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
             
-            # Detect faces with stricter parameters
-            faces = face_cascade.detectMultiScale(gray, 1.2, 6, minSize=(50, 50))
+            # Use standard face detection parameters
+            faces = face_cascade.detectMultiScale(gray, 1.1, 4, minSize=(30, 30))
+            print(f"Detected {len(faces)} faces")
             
             if len(faces) > 0:
                 # Take the largest face
                 face = max(faces, key=lambda rect: rect[2] * rect[3])
                 x, y, w, h = face
+                print(f"Main face: x={x}, y={y}, w={w}, h={h}")
                 
-                # More precise eye detection within upper half of face
-                eye_region_y = y + int(h * 0.15)  # Start from upper face area
-                eye_region_h = int(h * 0.4)       # Only upper 40% of face
+                # Focus eye detection on upper face region but be less restrictive
+                eye_region_y = y + int(h * 0.1)   # Start a bit lower
+                eye_region_h = int(h * 0.5)       # Cover more of the face
                 roi_gray = gray[eye_region_y:eye_region_y+eye_region_h, x:x+w]
                 
-                # Use stricter eye detection parameters
-                eyes = eye_cascade.detectMultiScale(roi_gray, 1.15, 5, minSize=(15, 10), maxSize=(int(w*0.3), int(h*0.2)))
+                # Use more permissive eye detection parameters
+                eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 3, minSize=(10, 8), maxSize=(int(w*0.4), int(h*0.3)))
+                print(f"Detected {len(eyes)} eye candidates in face region")
                 
-                # Filter and refine eye coordinates
+                # Process all detected eyes with less strict filtering
                 eye_coords = []
-                for (ex, ey, ew, eh) in eyes:
+                for i, (ex, ey, ew, eh) in enumerate(eyes):
                     # Convert to full image coordinates
                     abs_x = x + ex
                     abs_y = eye_region_y + ey
                     
-                    # Validate eye region (basic aspect ratio and position check)
-                    aspect_ratio = ew / eh if eh > 0 else 0
-                    if 1.5 <= aspect_ratio <= 4.0:  # Reasonable eye aspect ratio
-                        # Use smaller, more precise eye region focused on iris area
-                        iris_x = abs_x + int(ew * 0.25)  # Move inward from eye corners
-                        iris_y = abs_y + int(eh * 0.2)   # Slightly down from top
-                        iris_w = int(ew * 0.5)           # Half the detected eye width
-                        iris_h = int(eh * 0.6)           # 60% of detected eye height
-                        eye_coords.append((iris_x + iris_w//2, iris_y + iris_h//2, iris_w, iris_h))
+                    # Basic validation - just check if it's reasonable size
+                    if ew >= 8 and eh >= 6 and ew <= w*0.4 and eh <= h*0.3:
+                        # Create focused iris region within detected eye
+                        iris_x = abs_x + int(ew * 0.2)   # Inset from edges
+                        iris_y = abs_y + int(eh * 0.15)  # Slightly down from top
+                        iris_w = int(ew * 0.6)           # 60% of detected eye width
+                        iris_h = int(eh * 0.7)           # 70% of detected eye height
+                        
+                        center_x = iris_x + iris_w//2
+                        center_y = iris_y + iris_h//2
+                        eye_coords.append((center_x, center_y, iris_w, iris_h))
+                        print(f"Eye {i}: center=({center_x},{center_y}), size=({iris_w}x{iris_h})")
                 
                 return {
                     'has_face': True,
@@ -190,8 +196,9 @@ class StableDiffusionEnhancer:
             
             # Detect face and eyes  
             face_data = self.detect_face_regions(image)
-            if not face_data or not face_data.get('eyes'):
+            if not face_data or not face_data.get('eyes') or len(face_data.get('eyes', [])) == 0:
                 print("No eyes detected for color change")
+                print(f"Face data: {face_data}")
                 return image
             
             enhanced_bgr = img_bgr.copy()
