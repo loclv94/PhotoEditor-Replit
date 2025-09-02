@@ -47,36 +47,73 @@ class StableDiffusionEnhancer:
         }
     
     def detect_face_regions(self, image):
-        """Detect facial regions for targeted enhancements"""
+        """Detect facial regions using OpenCV for targeted enhancements"""
         try:
-            # Get image dimensions
+            import cv2
+            
+            # Convert PIL image to OpenCV format
+            img_array = np.array(image)
+            img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+            gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            
+            # Load cascade classifiers
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+            
+            # Detect faces
+            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+            
+            if len(faces) > 0:
+                # Take the largest face
+                face = max(faces, key=lambda rect: rect[2] * rect[3])
+                x, y, w, h = face
+                
+                # Extract face region for eye detection
+                roi_gray = gray[y:y+h, x:x+w]
+                eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 4)
+                
+                # Convert eye coordinates to full image coordinates
+                eye_coords = []
+                for (ex, ey, ew, eh) in eyes:
+                    eye_center_x = x + ex + ew//2
+                    eye_center_y = y + ey + eh//2
+                    eye_coords.append((eye_center_x, eye_center_y, ew, eh))
+                
+                return {
+                    'has_face': True,
+                    'face_box': (x, y, x+w, y+h),
+                    'eyes': eye_coords,
+                    'lips': (x + w//2, y + int(h * 0.75)),  # Estimate lip position
+                    'face_width': w,
+                    'face_height': h,
+                    'confidence': 0.9
+                }
+            else:
+                # Fallback to estimation if no face detected
+                width, height = image.size
+                return {
+                    'has_face': True,
+                    'face_box': (int(width*0.2), int(height*0.1), int(width*0.8), int(height*0.9)),
+                    'eyes': [(int(width*0.35), int(height*0.4), 30, 15), (int(width*0.65), int(height*0.4), 30, 15)],
+                    'lips': (int(width*0.5), int(height*0.7)),
+                    'face_width': int(width*0.6),
+                    'face_height': int(height*0.8),
+                    'confidence': 0.6
+                }
+                
+        except Exception as e:
+            print(f"Face detection error: {e}, using fallback")
+            # Fallback estimation
             width, height = image.size
-            
-            if NUMPY_AVAILABLE:
-                # Convert to numpy array for analysis
-                img_array = np.array(image)
-                height, width = img_array.shape[:2]
-            
-            # Estimate face region based on image composition
-            # This is a simplified approach - in production use proper face detection
-            face_region = {
-                'x': int(width * 0.25),
-                'y': int(height * 0.15),
-                'width': int(width * 0.5),
-                'height': int(height * 0.6),
-                'center_x': int(width * 0.5),
-                'center_y': int(height * 0.35)
-            }
-            
             return {
                 'has_face': True,
-                'primary_face': face_region,
-                'confidence': 0.85
+                'face_box': (int(width*0.2), int(height*0.1), int(width*0.8), int(height*0.9)),
+                'eyes': [(int(width*0.35), int(height*0.4), 30, 15), (int(width*0.65), int(height*0.4), 30, 15)],
+                'lips': (int(width*0.5), int(height*0.7)),
+                'face_width': int(width*0.6),
+                'face_height': int(height*0.8),
+                'confidence': 0.5
             }
-            
-        except Exception as e:
-            print(f"Face detection error: {e}")
-            return {'has_face': False}
     
     def create_region_mask(self, image, region_type, face_data=None):
         """Create masks for specific facial/body regions"""
