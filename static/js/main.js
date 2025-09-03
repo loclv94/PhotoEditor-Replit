@@ -20,24 +20,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
         uploadArea.addEventListener('drop', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             uploadArea.classList.remove('dragover');
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 fileInput.files = files;
-                uploadForm.submit();
+                // Add a small delay to prevent conflicts
+                setTimeout(() => {
+                    uploadForm.submit();
+                }, 100);
             }
         });
 
         // Handle click to upload
-        uploadArea.addEventListener('click', function() {
+        uploadArea.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             fileInput.click();
         });
 
         // Handle file selection
-        fileInput.addEventListener('change', function() {
+        fileInput.addEventListener('change', function(e) {
+            e.stopPropagation();
             if (this.files.length > 0) {
-                uploadForm.submit();
+                // Add a small delay to prevent immediate re-triggering
+                setTimeout(() => {
+                    uploadForm.submit();
+                }, 100);
             }
         });
     }
