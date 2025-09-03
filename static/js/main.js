@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadForm = document.getElementById('uploadForm');
 
     if (uploadArea && fileInput) {
+        console.log('Upload functionality initialized');
+        
         // Handle drag and drop
         uploadArea.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -25,16 +27,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
+                console.log('File dropped:', files[0].name);
                 fileInput.files = files;
-                // Add a small delay to prevent conflicts
-                setTimeout(() => {
-                    uploadForm.submit();
-                }, 100);
+                uploadForm.submit();
             }
         });
 
         // Handle click to upload
         uploadArea.addEventListener('click', function(e) {
+            console.log('Upload area clicked');
             e.preventDefault();
             e.stopPropagation();
             fileInput.click();
@@ -42,14 +43,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Handle file selection
         fileInput.addEventListener('change', function(e) {
+            console.log('File selected:', this.files[0]?.name);
             e.stopPropagation();
             if (this.files.length > 0) {
-                // Add a small delay to prevent immediate re-triggering
-                setTimeout(() => {
-                    uploadForm.submit();
-                }, 100);
+                uploadForm.submit();
             }
         });
+    } else {
+        console.log('Upload elements not found:', { uploadArea, fileInput });
     }
 
     // Enhancement form functionality
