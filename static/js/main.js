@@ -33,13 +33,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Handle click to upload
-        uploadArea.addEventListener('click', function(e) {
-            console.log('Upload area clicked');
-            e.preventDefault();
-            e.stopPropagation();
-            fileInput.click();
-        });
+        // The file input now overlays the upload area, so clicks go directly to it
+        // No need for manual click handling
 
         // Handle file selection
         fileInput.addEventListener('change', function(e) {
