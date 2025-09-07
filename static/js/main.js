@@ -125,63 +125,8 @@ document.addEventListener('DOMContentLoaded', function() {
             enhanceBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing with AI...';
             enhanceBtn.disabled = true;
 
-            // Initialize upload functionality only if elements exist
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        
-        if (uploadArea && fileInput) {
-            // Drag and drop functionality
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('drag-over');
-            });
-            
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('drag-over');
-            });
-            
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('drag-over');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    console.log('File dropped:', files[0].name);
-                    fileInput.files = files;
-                    // Auto-submit the form
-                    document.getElementById('uploadForm').submit();
-                }
-            });
-            
-            uploadArea.addEventListener('click', () => {
-                fileInput.click();
-            });
-            
-            fileInput.addEventListener('change', () => {
-                if (fileInput.files.length > 0) {
-                    document.getElementById('uploadForm').submit();
-                }
-            });
-        } else {
-            console.log('Upload elements not found:', {uploadArea, fileInput});
-        }
-        
-        // Enhancement functionality
-        const enhanceBtn = document.getElementById('enhanceBtn');
-        if (enhanceBtn) {
-            enhanceBtn.addEventListener('click', function() {
-                const filename = this.dataset.filename;
-                const enhancementPrompt = document.getElementById('enhancementPrompt').value;
-                
-                // Get selected enhancements
-                const enhancements = {};
-                
-                // Show loading state
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enhancing...';
-                this.disabled = true;
-                
-                // Send enhancement request with prompt
-                fetch('/api/enhance', {
+            // Send enhancement request
+            fetch('/api/enhance', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -195,10 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Show success message
                     showAlert('Enhancement completed successfully!', 'success');
-                    
-                    // Reload the page to show comparison
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
@@ -211,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showAlert('An error occurred during enhancement', 'error');
             })
             .finally(() => {
-                // Reset button state
                 enhanceBtn.innerHTML = originalText;
                 enhanceBtn.disabled = false;
             });
