@@ -26,7 +26,7 @@ class GeminiEnhancer:
         self.model_name = "gemini-2.5-flash-image-preview"
         print(f"Gemini Enhancer ready with model: {self.model_name}")
     
-    def enhance_image(self, original_path, enhanced_path, enhancements, enhancement_prompt=""):
+    def enhance_image(self, original_path, enhanced_path, enhancements, enhancement_prompt="", source_image_path=None):
         """
         Apply AI-powered enhancements to an image using Gemini
         
@@ -35,19 +35,22 @@ class GeminiEnhancer:
             enhanced_path: Path to save enhanced image
             enhancements: Dictionary of enhancement parameters
             enhancement_prompt: User's text prompt for AI enhancement
+            source_image_path: Path to use as source (for conversational editing)
             
         Returns:
             bool: True if successful, False otherwise
         """
         try:
-            print(f"Enhancing image with Gemini: {original_path}")
+            # Use source_image_path if provided (for conversational editing), otherwise use original
+            input_path = source_image_path if source_image_path else original_path
+            print(f"Enhancing image with Gemini: {input_path}")
             
-            # Load the original image
-            with open(original_path, 'rb') as f:
+            # Load the input image
+            with open(input_path, 'rb') as f:
                 image_data = f.read()
             
-            # Create enhancement prompt based on parameters and user input
-            prompt = self._create_enhancement_prompt(enhancements, enhancement_prompt)
+            # Create enhancement prompt for conversational editing
+            prompt = self._create_conversational_prompt(enhancement_prompt, bool(source_image_path))
             print(f"Enhancement prompt: {prompt}")
             
             # Send the prompt to Gemini for image generation
@@ -145,6 +148,31 @@ class GeminiEnhancer:
         full_prompt = base_prompt + enhancement_text + custom_prompt + quality_prompt
         
         return full_prompt
+    
+    def _create_conversational_prompt(self, user_prompt, is_follow_up=False):
+        """
+        Create a conversational prompt for multi-turn editing
+        """
+        if is_follow_up:
+            # This is a follow-up edit - focus on the specific change requested
+            base_prompt = ("Based on this current image, make the following specific change: ")
+            instruction = f"{user_prompt.strip()}. "
+            quality_prompt = ("Keep all other aspects of the image exactly the same. "
+                             "Only modify what was specifically requested. "
+                             "Maintain the same quality, lighting, and composition.")
+        else:
+            # This is the initial edit
+            base_prompt = ("Create a high-quality, professionally enhanced version of this photo. ")
+            if user_prompt and user_prompt.strip():
+                instruction = f"Apply this specific enhancement: {user_prompt.strip()}. "
+            else:
+                instruction = ("Apply general photo enhancement including skin smoothing, "
+                              "color correction, and lighting improvements. ")
+            quality_prompt = ("Ensure the enhanced photo looks professional and suitable for social media. "
+                             "Keep facial features recognizable and avoid over-processing. "
+                             "Maintain natural skin tones and realistic proportions.")
+        
+        return base_prompt + instruction + quality_prompt
     
     def analyze_image(self, image_path):
         """

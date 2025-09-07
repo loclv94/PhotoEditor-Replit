@@ -97,6 +97,53 @@ def api_enhance():
         app.logger.error(f"Enhancement error: {str(e)}")
         return jsonify({'error': 'Enhancement failed'}), 500
 
+@app.route('/api/continue-edit', methods=['POST'])
+def api_continue_edit():
+    """API endpoint for conversational follow-up editing"""
+    data = request.get_json()
+    filename = data.get('filename')
+    enhancement_prompt = data.get('enhancement_prompt', '')
+    
+    if not filename:
+        return jsonify({'error': 'No filename provided'}), 400
+    
+    if not enhancement_prompt.strip():
+        return jsonify({'error': 'Please provide editing instructions'}), 400
+    
+    original_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if not os.path.exists(original_path):
+        return jsonify({'error': 'Original image not found'}), 404
+    
+    try:
+        # Check if enhanced version exists to use as source
+        enhanced_filename = f"enhanced_{filename}"
+        current_enhanced_path = os.path.join(app.config['ENHANCED_FOLDER'], enhanced_filename)
+        
+        # Use enhanced version as source if it exists, otherwise use original
+        source_path = current_enhanced_path if os.path.exists(current_enhanced_path) else original_path
+        
+        # Create new enhanced version
+        success = enhance_image(
+            original_path, 
+            current_enhanced_path, 
+            {}, 
+            enhancement_prompt,
+            source_path  # This enables conversational editing
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'enhanced_filename': enhanced_filename,
+                'message': 'Image updated successfully!'
+            })
+        else:
+            return jsonify({'error': 'Enhancement failed'}), 500
+            
+    except Exception as e:
+        app.logger.error(f"Conversational edit error: {str(e)}")
+        return jsonify({'error': 'Enhancement failed'}), 500
+
 @app.route('/delete/<filename>', methods=['POST'])
 def delete_image(filename):
     """Delete an uploaded image and its enhanced version"""

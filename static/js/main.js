@@ -158,6 +158,59 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+        // Handle continue editing for conversational editing
+        const continueEditBtn = document.getElementById('continueEditBtn');
+        if (continueEditBtn) {
+            continueEditBtn.addEventListener('click', function() {
+                const filename = this.dataset.filename;
+                const enhancementPrompt = document.getElementById('enhancementPrompt').value;
+                
+                if (!enhancementPrompt.trim()) {
+                    showAlert('Please enter what you want to change', 'error');
+                    return;
+                }
+                
+                // Show loading state
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Applying Changes...';
+                this.disabled = true;
+                
+                // Send conversational edit request
+                fetch('/api/continue-edit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filename: filename,
+                        enhancement_prompt: enhancementPrompt
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('✨ ' + data.message, 'success');
+                        // Clear the prompt for next edit
+                        document.getElementById('enhancementPrompt').value = '';
+                        // Reload to show updated image
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert(data.error || 'Enhancement failed', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('An error occurred during enhancement', 'error');
+                })
+                .finally(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+            });
+        }
+
         // Handle reset button
         if (resetBtn) {
             resetBtn.addEventListener('click', function() {

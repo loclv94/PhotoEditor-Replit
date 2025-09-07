@@ -46,7 +46,7 @@ def get_all_images():
     
     return sorted(images, key=lambda x: x['filename'])
 
-def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt=""):
+def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt="", source_image_path=None):
     """
     Apply AI-powered enhancements to an image using Gemini
     
@@ -55,6 +55,7 @@ def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt
         enhanced_path: Path to save enhanced image
         enhancements: Dictionary of enhancement parameters
         enhancement_prompt: User's text prompt for AI enhancement
+        source_image_path: Path to source image for conversational editing
         
     Returns:
         bool: True if successful, False otherwise
@@ -63,12 +64,13 @@ def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt
         # Initialize Gemini enhancer
         enhancer = GeminiEnhancer()
         
-        # Use Gemini AI enhancement
+        # Use Gemini AI enhancement (supports conversational editing)
         success = enhancer.enhance_image(
             original_path, 
             enhanced_path, 
             enhancements, 
-            enhancement_prompt
+            enhancement_prompt,
+            source_image_path
         )
         
         if success:
