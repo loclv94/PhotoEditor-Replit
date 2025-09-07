@@ -51,9 +51,9 @@ class GeminiEnhancer:
             print(f"Enhancement prompt: {prompt}")
             
             # Send the prompt to Gemini for image generation
-            response = self.client.generate_content(
+            response = self.client.models.generate_content(
                 model=self.model_name,
-                contents=[prompt]
+                contents=prompt
             )
             
             # Process the response and save enhanced image
