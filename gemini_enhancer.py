@@ -58,18 +58,20 @@ class GeminiEnhancer:
             
             # Process the response and save enhanced image
             if response.candidates and len(response.candidates) > 0:
-                for part in response.candidates[0].content.parts:
-                    # Check if the part contains image data
-                    if part.inline_data is not None:
-                        # Use PIL to open the image from bytes
-                        enhanced_image = Image.open(io.BytesIO(part.inline_data.data))
-                        # Save the enhanced image
-                        enhanced_image.save(enhanced_path)
-                        print(f"Enhanced image saved to: {enhanced_path}")
-                        return True
-                    elif part.text is not None:
-                        # If the response includes text, log it
-                        print("Gemini response:", part.text)
+                candidate = response.candidates[0]
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        # Check if the part contains image data
+                        if part.inline_data is not None and part.inline_data.data is not None:
+                            # Use PIL to open the image from bytes
+                            enhanced_image = Image.open(io.BytesIO(part.inline_data.data))
+                            # Save the enhanced image
+                            enhanced_image.save(enhanced_path)
+                            print(f"Enhanced image saved to: {enhanced_path}")
+                            return True
+                        elif part.text is not None:
+                            # If the response includes text, log it
+                            print("Gemini response:", part.text)
             
             print("No image data found in Gemini response")
             return False

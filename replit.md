@@ -115,6 +115,7 @@ This is a Flask-based web application that provides AI-powered photo enhancement
 - July 03, 2025. Initial setup
 - July 03, 2025. Integrated real AI enhancement using OpenAI API with Stable Diffusion-style image generation, added text prompt functionality for custom enhancement descriptions
 - September 02, 2025. **Major Architecture Overhaul**: Replaced OpenAI-based enhancement with ComfyUI + Stable Diffusion + LoRA system. Implemented 15+ professional photo editing features including eye color/shape adjustment, face modification, hair styling, body proportions, background replacement, skin correction, makeup application, and advanced lighting controls. Added natural language prompt parsing for intuitive enhancement requests.
+- September 07, 2025. **Gemini Integration**: Replaced OpenCV/Stable Diffusion system with Google's Gemini AI for image enhancement. Simplified architecture by removing complex facial detection algorithms and using Gemini's natural language processing for photo enhancement. Removed opencv-python and numpy dependencies. The system now uses Gemini's multimodal capabilities for AI-powered photo enhancement with natural language prompts.
 
 ## User Preferences
 
