@@ -53,15 +53,26 @@ class GeminiEnhancer:
             # Use the generate_content method with both prompt and image
             response = self.model.generate_content([prompt, base_image])
             
-            # Check if the response contains an image part
-            if response.parts and response.parts[0].image:
-                edited_image = response.parts[0].image
-                # Save the edited image
-                edited_image.save(enhanced_path)
-                print(f"Enhanced image saved to: {enhanced_path}")
-                return True
+            # Check if the response contains parts with image data
+            if hasattr(response, 'parts') and response.parts:
+                for part in response.parts:
+                    # Check for image data in the part
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        # Extract image data from inline_data
+                        image_data = part.inline_data.data
+                        # Convert bytes to PIL Image
+                        edited_image = Image.open(io.BytesIO(image_data))
+                        # Save the edited image
+                        edited_image.save(enhanced_path)
+                        print(f"Enhanced image saved to: {enhanced_path}")
+                        return True
+                    elif hasattr(part, 'text') and part.text:
+                        print("Gemini response:", part.text)
+                
+                print("Model response did not contain image data.")
+                return False
             else:
-                print("Model response did not contain an image.")
+                print("Model response did not contain any parts.")
                 # Log any text response
                 if hasattr(response, 'text') and response.text:
                     print("Gemini response:", response.text)
@@ -167,22 +178,20 @@ class GeminiEnhancer:
         Analyze an image to understand its content and suggest enhancements
         """
         try:
-            with open(image_path, "rb") as f:
-                image_bytes = f.read()
-                response = self.client.models.generate_content(
-                    model="gemini-2.5-pro",
-                    contents=[
-                        genai.types.Part.from_bytes(
-                            data=image_bytes,
-                            mime_type="image/jpeg",
-                        ),
-                        "Analyze this portrait photo and suggest specific enhancements that would make it more suitable for social media. "
-                        "Focus on facial features, lighting, skin quality, and overall composition. "
-                        "Provide specific suggestions for improvements.",
-                    ],
-                )
+            # Load the image
+            base_image = Image.open(image_path)
+            if base_image.mode == 'RGBA':
+                base_image = base_image.convert('RGB')
             
-            return response.text if response.text else "No analysis available"
+            # Create analysis prompt
+            analysis_prompt = ("Analyze this portrait photo and suggest specific enhancements that would make it more suitable for social media. "
+                             "Focus on facial features, lighting, skin quality, and overall composition. "
+                             "Provide specific suggestions for improvements.")
+            
+            # Use the same model for analysis
+            response = self.model.generate_content([analysis_prompt, base_image])
+            
+            return response.text if hasattr(response, 'text') and response.text else "No analysis available"
             
         except Exception as e:
             print(f"Image analysis error: {e}")
