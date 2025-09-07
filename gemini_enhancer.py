@@ -3,14 +3,7 @@ import io
 import json
 import logging
 from PIL import Image
-from google import genai
-
-# IMPORTANT: KEEP THIS COMMENT
-# Follow these instructions when using this blueprint:
-# - Note that the newest Gemini model series is "gemini-2.5-flash" or gemini-2.5-pro"
-#   - do not change this unless explicitly requested by the user
-# - Sometimes the google genai SDK has occasional type errors. You might need to run to validate, at time.  
-# The SDK was recently renamed from google-generativeai to google-genai. This file reflects the new name and the new APIs.
+import google.generativeai as genai
 
 class GeminiEnhancer:
     """
@@ -20,10 +13,12 @@ class GeminiEnhancer:
     
     def __init__(self):
         print("Initializing Gemini Enhancer...")
-        # This API key is from Gemini Developer API Key, not vertex AI API Key
-        self.client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-        # The model name for image generation
+        # Configure the API key
+        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+        # The model name for image editing
         self.model_name = "gemini-2.5-flash-image-preview"
+        # Instantiate the model
+        self.model = genai.GenerativeModel(self.model_name)
         print(f"Gemini Enhancer ready with model: {self.model_name}")
     
     def enhance_image(self, original_path, enhanced_path, enhancements, enhancement_prompt="", source_image_path=None):
@@ -45,39 +40,32 @@ class GeminiEnhancer:
             input_path = source_image_path if source_image_path else original_path
             print(f"Enhancing image with Gemini: {input_path}")
             
-            # Load the input image
-            with open(input_path, 'rb') as f:
-                image_data = f.read()
+            # Load the base image
+            base_image = Image.open(input_path)
+            # Convert image to RGB format if needed to avoid transparency issues
+            if base_image.mode == 'RGBA':
+                base_image = base_image.convert('RGB')
             
             # Create enhancement prompt for conversational editing
             prompt = self._create_conversational_prompt(enhancement_prompt, bool(source_image_path))
             print(f"Enhancement prompt: {prompt}")
             
-            # Send the prompt to Gemini for image generation
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=prompt
-            )
+            # Use the generate_content method with both prompt and image
+            response = self.model.generate_content([prompt, base_image])
             
-            # Process the response and save enhanced image
-            if response.candidates and len(response.candidates) > 0:
-                candidate = response.candidates[0]
-                if candidate.content and candidate.content.parts:
-                    for part in candidate.content.parts:
-                        # Check if the part contains image data
-                        if part.inline_data is not None and part.inline_data.data is not None:
-                            # Use PIL to open the image from bytes
-                            enhanced_image = Image.open(io.BytesIO(part.inline_data.data))
-                            # Save the enhanced image
-                            enhanced_image.save(enhanced_path)
-                            print(f"Enhanced image saved to: {enhanced_path}")
-                            return True
-                        elif part.text is not None:
-                            # If the response includes text, log it
-                            print("Gemini response:", part.text)
-            
-            print("No image data found in Gemini response")
-            return False
+            # Check if the response contains an image part
+            if response.parts and response.parts[0].image:
+                edited_image = response.parts[0].image
+                # Save the edited image
+                edited_image.save(enhanced_path)
+                print(f"Enhanced image saved to: {enhanced_path}")
+                return True
+            else:
+                print("Model response did not contain an image.")
+                # Log any text response
+                if hasattr(response, 'text') and response.text:
+                    print("Gemini response:", response.text)
+                return False
             
         except Exception as e:
             print(f"Gemini enhancement error: {e}")
