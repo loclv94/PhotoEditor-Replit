@@ -1,7 +1,7 @@
 import os
 from PIL import Image, ImageEnhance, ImageFilter
 from app import app
-from stable_diffusion_enhancer import StableDiffusionEnhancer
+from gemini_enhancer import GeminiEnhancer
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -48,7 +48,7 @@ def get_all_images():
 
 def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt=""):
     """
-    Apply AI-powered enhancements to an image using Stable Diffusion
+    Apply AI-powered enhancements to an image using Gemini
     
     Args:
         original_path: Path to original image
@@ -60,10 +60,10 @@ def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt
         bool: True if successful, False otherwise
     """
     try:
-        # Initialize ComfyUI-style enhancer
-        enhancer = StableDiffusionEnhancer()
+        # Initialize Gemini enhancer
+        enhancer = GeminiEnhancer()
         
-        # Use advanced AI enhancement
+        # Use Gemini AI enhancement
         success = enhancer.enhance_image(
             original_path, 
             enhanced_path, 
