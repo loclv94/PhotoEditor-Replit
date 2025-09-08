@@ -17,8 +17,7 @@ class GeminiEnhancer:
         # Configure the API key
         genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-        console.log("Gemini API configured with key: " +
-                    os.environ.get("GEMINI_API_KEY"))
+        print("Gemini API configured with key: " + str(os.environ.get("GEMINI_API_KEY")))
         # The model name for image editing
         self.model_name = "gemini-2.5-flash-image-preview"
         # Instantiate the model
