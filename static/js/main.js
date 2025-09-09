@@ -120,13 +120,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 expression: document.getElementById('expression') ? document.getElementById('expression').value : ''
             };
             
-            // If no conversational prompt, create one from dropdown selections
-            if (!enhancementPrompt.trim()) {
-                enhancementPrompt = createPromptFromSelections(enhancements);
-                if (!enhancementPrompt) {
-                    showAlert('Please enter a text prompt or select enhancement options', 'error');
-                    return;
-                }
+            // Always combine text prompt with dropdown selections
+            const dropdownPrompt = createPromptFromSelections(enhancements);
+            
+            // Combine both text and dropdown selections
+            if (enhancementPrompt.trim() && dropdownPrompt) {
+                enhancementPrompt = enhancementPrompt.trim() + ', ' + dropdownPrompt;
+            } else if (dropdownPrompt) {
+                enhancementPrompt = dropdownPrompt;
+            } else if (!enhancementPrompt.trim()) {
+                showAlert('Please enter a text prompt or select enhancement options', 'error');
+                return;
             }
 
             // Show loading state
@@ -172,10 +176,51 @@ document.addEventListener('DOMContentLoaded', function() {
         if (continueEditBtn) {
             continueEditBtn.addEventListener('click', function() {
                 const filename = this.dataset.filename;
-                const enhancementPrompt = document.getElementById('enhancementPrompt').value;
+                let enhancementPrompt = document.getElementById('enhancementPrompt').value;
                 
-                if (!enhancementPrompt.trim()) {
-                    showAlert('Please enter what you want to change', 'error');
+                // Get current dropdown selections for continue editing too
+                const enhancements = {
+                    // Basic sliders
+                    brightness: document.getElementById('brightnessSlider') ? parseInt(document.getElementById('brightnessSlider').value) : 0,
+                    contrast: document.getElementById('contrastSlider') ? parseInt(document.getElementById('contrastSlider').value) : 0,
+                    saturation: document.getElementById('saturationSlider') ? parseInt(document.getElementById('saturationSlider').value) : 0,
+                    
+                    // Body & Posture
+                    height: document.getElementById('heightSlider') ? parseInt(document.getElementById('heightSlider').value) : 0,
+                    body: document.getElementById('bodySlider') ? parseInt(document.getElementById('bodySlider').value) : 0,
+                    posture: document.getElementById('postureSlider') ? parseInt(document.getElementById('postureSlider').value) : 0,
+                    
+                    // Skin & Beauty
+                    blemish: document.getElementById('blemishSlider') ? parseInt(document.getElementById('blemishSlider').value) : 0,
+                    
+                    // Facial Features
+                    eyeColor: document.getElementById('eyeColor') ? document.getElementById('eyeColor').value : '',
+                    eyeShape: document.getElementById('eyeShape') ? document.getElementById('eyeShape').value : '',
+                    lipColor: document.getElementById('lipColor') ? document.getElementById('lipColor').value : '',
+                    faceShape: document.getElementById('faceShape') ? document.getElementById('faceShape').value : '',
+                    
+                    // Hair & Style
+                    hairColor: document.getElementById('hairColor') ? document.getElementById('hairColor').value : '',
+                    hairStyle: document.getElementById('hairStyle') ? document.getElementById('hairStyle').value : '',
+                    makeup: document.getElementById('makeup') ? document.getElementById('makeup').value : '',
+                    
+                    // Environment & Style
+                    background: document.getElementById('background') ? document.getElementById('background').value : '',
+                    lighting: document.getElementById('lighting') ? document.getElementById('lighting').value : '',
+                    clothing: document.getElementById('clothing') ? document.getElementById('clothing').value : '',
+                    skinTone: document.getElementById('skinTone') ? document.getElementById('skinTone').value : '',
+                    expression: document.getElementById('expression') ? document.getElementById('expression').value : ''
+                };
+                
+                // Combine text with dropdown selections for continue editing
+                const dropdownPrompt = createPromptFromSelections(enhancements);
+                
+                if (enhancementPrompt.trim() && dropdownPrompt) {
+                    enhancementPrompt = enhancementPrompt.trim() + ', ' + dropdownPrompt;
+                } else if (dropdownPrompt) {
+                    enhancementPrompt = dropdownPrompt;
+                } else if (!enhancementPrompt.trim()) {
+                    showAlert('Please enter what you want to change or select enhancement options', 'error');
                     return;
                 }
                 
@@ -241,6 +286,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (promptField) {
                     promptField.value = '';
                 }
+                
+                // Reset all dropdowns
+                const dropdowns = ['eyeColor', 'eyeShape', 'lipColor', 'faceShape', 'hairColor', 
+                                 'hairStyle', 'makeup', 'background', 'lighting', 'clothing', 
+                                 'skinTone', 'expression'];
+                
+                dropdowns.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.selectedIndex = 0; // Reset to first option (usually "Original" or "Natural")
+                    }
+                });
             });
         }
     }
