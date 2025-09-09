@@ -120,6 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 expression: document.getElementById('expression') ? document.getElementById('expression').value : ''
             };
             
+            // Check if we have basic adjustments (these work without AI prompt)
+            const hasBasicAdjustments = (
+                Math.abs(enhancements.brightness) > 0 ||
+                Math.abs(enhancements.contrast) > 0 ||
+                Math.abs(enhancements.saturation) > 0
+            );
+            
             // Always combine text prompt with dropdown selections
             const dropdownPrompt = createPromptFromSelections(enhancements);
             
@@ -128,8 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 enhancementPrompt = enhancementPrompt.trim() + ', ' + dropdownPrompt;
             } else if (dropdownPrompt) {
                 enhancementPrompt = dropdownPrompt;
-            } else if (!enhancementPrompt.trim()) {
-                showAlert('Please enter a text prompt or select enhancement options', 'error');
+            } else if (!enhancementPrompt.trim() && !hasBasicAdjustments) {
+                showAlert('Please enter a text prompt, select enhancement options, or adjust basic settings', 'error');
                 return;
             }
 
@@ -212,6 +219,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     expression: document.getElementById('expression') ? document.getElementById('expression').value : ''
                 };
                 
+                // Check if we have basic adjustments for continue editing too
+                const hasBasicAdjustments = (
+                    Math.abs(enhancements.brightness) > 0 ||
+                    Math.abs(enhancements.contrast) > 0 ||
+                    Math.abs(enhancements.saturation) > 0
+                );
+                
                 // Combine text with dropdown selections for continue editing
                 const dropdownPrompt = createPromptFromSelections(enhancements);
                 
@@ -219,8 +233,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     enhancementPrompt = enhancementPrompt.trim() + ', ' + dropdownPrompt;
                 } else if (dropdownPrompt) {
                     enhancementPrompt = dropdownPrompt;
-                } else if (!enhancementPrompt.trim()) {
-                    showAlert('Please enter what you want to change or select enhancement options', 'error');
+                } else if (!enhancementPrompt.trim() && !hasBasicAdjustments) {
+                    showAlert('Please enter what you want to change, select enhancement options, or adjust basic settings', 'error');
                     return;
                 }
                 
