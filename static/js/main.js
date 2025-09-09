@@ -84,7 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const filename = document.getElementById('filename').value;
-            const enhancementPrompt = document.getElementById('enhancementPrompt').value;
+            let enhancementPrompt = document.getElementById('enhancementPrompt').value;
+            
+            // Get all enhancement options
             const enhancements = {
                 // Basic sliders
                 brightness: parseInt(document.getElementById('brightnessSlider').value),
@@ -119,6 +121,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 lighting: document.getElementById('lighting').value,
                 clothing: document.getElementById('clothing').value
             };
+            
+            // If no conversational prompt, create one from dropdown selections
+            if (!enhancementPrompt.trim()) {
+                enhancementPrompt = createPromptFromSelections(enhancements);
+                if (!enhancementPrompt) {
+                    showAlert('Please enter a text prompt or select enhancement options', 'error');
+                    return;
+                }
+            }
 
             // Show loading state
             const originalText = enhanceBtn.innerHTML;
@@ -293,3 +304,43 @@ document.addEventListener('DOMContentLoaded', function() {
         images.forEach(img => imageObserver.observe(img));
     }
 });
+
+// Helper function to create enhancement prompt from dropdown selections
+function createPromptFromSelections(enhancements) {
+    const changes = [];
+    
+    // Facial features
+    if (enhancements.eyeColor) changes.push(`change eye color to ${enhancements.eyeColor}`);
+    if (enhancements.eyeShape) changes.push(`make eyes more ${enhancements.eyeShape}`);
+    if (enhancements.lipColor) changes.push(`change lip color to ${enhancements.lipColor}`);
+    if (enhancements.faceShape) changes.push(`adjust face shape to be more ${enhancements.faceShape}`);
+    
+    // Hair
+    if (enhancements.hairColor) changes.push(`change hair color to ${enhancements.hairColor}`);
+    if (enhancements.hairStyle) changes.push(`style hair to be ${enhancements.hairStyle}`);
+    
+    // Makeup and expression
+    if (enhancements.makeup) changes.push(`apply ${enhancements.makeup} makeup`);
+    if (enhancements.expression) changes.push(`change expression to ${enhancements.expression}`);
+    
+    // Skin and beauty
+    if (enhancements.skinTone) changes.push(`improve skin tone to ${enhancements.skinTone}`);
+    
+    // Environment
+    if (enhancements.background) changes.push(`change background to ${enhancements.background}`);
+    if (enhancements.lighting) changes.push(`adjust lighting to ${enhancements.lighting}`);
+    if (enhancements.clothing) changes.push(`change clothing to ${enhancements.clothing}`);
+    
+    // Basic adjustments (only include if significantly changed)
+    if (Math.abs(enhancements.brightness) > 10) {
+        changes.push(`adjust brightness ${enhancements.brightness > 0 ? 'brighter' : 'darker'}`);
+    }
+    if (Math.abs(enhancements.contrast) > 10) {
+        changes.push(`adjust contrast ${enhancements.contrast > 0 ? 'higher' : 'lower'}`);
+    }
+    if (Math.abs(enhancements.saturation) > 10) {
+        changes.push(`adjust saturation ${enhancements.saturation > 0 ? 'more vibrant' : 'more muted'}`);
+    }
+    
+    return changes.length > 0 ? changes.join(', ') : '';
+}

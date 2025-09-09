@@ -301,20 +301,21 @@
                         </form>
                         
                         <!-- Fixed buttons at bottom -->
-                        <div class="sidebar-buttons">
-                            <div class="d-grid gap-2">
-                                {% if has_enhanced %}
-                                <button type="button" class="btn btn-outline-primary" id="continueEditBtn" data-filename="{{ original_filename }}">
-                                    <i class="fas fa-comments me-2"></i>Continue Editing
-                                </button>
-                                {% endif %}
-                                <button type="submit" form="enhanceForm" class="btn btn-primary" id="enhanceBtn">
-                                    <i class="fas fa-robot me-2"></i>Enhance with AI
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" id="resetBtn">
-                                    <i class="fas fa-undo me-2"></i>Reset All Settings
-                                </button>
-                            </div>
+                        
+                    </div>
+                    <div class="sidebar-buttons">
+                        <div class="d-grid gap-2">
+                            {% if has_enhanced %}
+                            <button type="button" class="btn btn-outline-primary" id="continueEditBtn" data-filename="{{ original_filename }}">
+                                <i class="fas fa-comments me-2"></i>Continue Editing
+                            </button>
+                            {% endif %}
+                            <button type="submit" form="enhanceForm" class="btn btn-primary" id="enhanceBtn">
+                                <i class="fas fa-robot me-2"></i>Enhance with AI
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="resetBtn">
+                                <i class="fas fa-undo me-2"></i>Reset All Settings
+                            </button>
                         </div>
                     </div>
                 </div>
