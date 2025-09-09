@@ -65,17 +65,20 @@ def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt
         input_path = source_image_path if source_image_path else original_path
         
         # Check if we have basic adjustments (brightness, contrast, saturation)
+        print(f"Debug enhancements received: {enhancements}")  # Debug log
         has_basic_adjustments = (
             abs(enhancements.get('brightness', 0)) > 0 or
             abs(enhancements.get('contrast', 0)) > 0 or
             abs(enhancements.get('saturation', 0)) > 0
         )
+        print(f"Debug has_basic_adjustments: {has_basic_adjustments}")  # Debug log
         
-        # Check if we have AI features or text prompt
+        # Check if we have AI features or text prompt  
         has_ai_features = (
             enhancement_prompt.strip() or
             any(enhancements.get(key) for key in ['eyeColor', 'hairColor', 'makeup', 'background', 'lighting', 'clothing', 'skinTone', 'expression'])
         )
+        print(f"Debug has_ai_features: {has_ai_features}")  # Debug log
         
         temp_path = None
         
