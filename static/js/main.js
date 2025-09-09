@@ -86,40 +86,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const filename = document.getElementById('filename').value;
             let enhancementPrompt = document.getElementById('enhancementPrompt').value;
             
-            // Get all enhancement options
+            // Get all enhancement options (safely check if elements exist)
             const enhancements = {
                 // Basic sliders
-                brightness: parseInt(document.getElementById('brightnessSlider').value),
-                contrast: parseInt(document.getElementById('contrastSlider').value),
-                saturation: parseInt(document.getElementById('saturationSlider').value),
+                brightness: document.getElementById('brightnessSlider') ? parseInt(document.getElementById('brightnessSlider').value) : 0,
+                contrast: document.getElementById('contrastSlider') ? parseInt(document.getElementById('contrastSlider').value) : 0,
+                saturation: document.getElementById('saturationSlider') ? parseInt(document.getElementById('saturationSlider').value) : 0,
                 
                 // Body & Posture
-                height: parseInt(document.getElementById('heightSlider').value),
-                body: parseInt(document.getElementById('bodySlider').value),
-                posture: parseInt(document.getElementById('postureSlider').value),
+                height: document.getElementById('heightSlider') ? parseInt(document.getElementById('heightSlider').value) : 0,
+                body: document.getElementById('bodySlider') ? parseInt(document.getElementById('bodySlider').value) : 0,
+                posture: document.getElementById('postureSlider') ? parseInt(document.getElementById('postureSlider').value) : 0,
                 
                 // Skin & Beauty
-                blemish: parseInt(document.getElementById('blemishSlider').value),
+                blemish: document.getElementById('blemishSlider') ? parseInt(document.getElementById('blemishSlider').value) : 0,
                 
                 // Facial Features
-                eyeColor: document.getElementById('eyeColor').value,
-                eyeShape: document.getElementById('eyeShape').value,
-                lipColor: document.getElementById('lipColor').value,
-                faceShape: document.getElementById('faceShape').value,
+                eyeColor: document.getElementById('eyeColor') ? document.getElementById('eyeColor').value : '',
+                eyeShape: document.getElementById('eyeShape') ? document.getElementById('eyeShape').value : '',
+                lipColor: document.getElementById('lipColor') ? document.getElementById('lipColor').value : '',
+                faceShape: document.getElementById('faceShape') ? document.getElementById('faceShape').value : '',
                 
                 // Hair & Style
-                hairColor: document.getElementById('hairColor').value,
-                hairStyle: document.getElementById('hairStyle').value,
-                makeup: document.getElementById('makeup').value,
+                hairColor: document.getElementById('hairColor') ? document.getElementById('hairColor').value : '',
+                hairStyle: document.getElementById('hairStyle') ? document.getElementById('hairStyle').value : '',
+                makeup: document.getElementById('makeup') ? document.getElementById('makeup').value : '',
                 
-                // Skin & Beauty
-                skinTone: document.getElementById('skinTone').value,
-                expression: document.getElementById('expression').value,
-                
-                // Environment & Style
-                background: document.getElementById('background').value,
-                lighting: document.getElementById('lighting').value,
-                clothing: document.getElementById('clothing').value
+                // Environment & Style (check if elements exist)
+                background: document.getElementById('background') ? document.getElementById('background').value : '',
+                lighting: document.getElementById('lighting') ? document.getElementById('lighting').value : '',
+                clothing: document.getElementById('clothing') ? document.getElementById('clothing').value : '',
+                skinTone: document.getElementById('skinTone') ? document.getElementById('skinTone').value : '',
+                expression: document.getElementById('expression') ? document.getElementById('expression').value : ''
             };
             
             // If no conversational prompt, create one from dropdown selections
@@ -309,27 +307,55 @@ document.addEventListener('DOMContentLoaded', function() {
 function createPromptFromSelections(enhancements) {
     const changes = [];
     
+    console.log('Creating prompt from selections:', enhancements); // Debug log
+    
     // Facial features
-    if (enhancements.eyeColor) changes.push(`change eye color to ${enhancements.eyeColor}`);
-    if (enhancements.eyeShape) changes.push(`make eyes more ${enhancements.eyeShape}`);
-    if (enhancements.lipColor) changes.push(`change lip color to ${enhancements.lipColor}`);
-    if (enhancements.faceShape) changes.push(`adjust face shape to be more ${enhancements.faceShape}`);
+    if (enhancements.eyeColor && enhancements.eyeColor !== '') {
+        changes.push(`change eye color to ${enhancements.eyeColor}`);
+    }
+    if (enhancements.eyeShape && enhancements.eyeShape !== '') {
+        changes.push(`make eyes more ${enhancements.eyeShape}`);
+    }
+    if (enhancements.lipColor && enhancements.lipColor !== '') {
+        changes.push(`change lip color to ${enhancements.lipColor}`);
+    }
+    if (enhancements.faceShape && enhancements.faceShape !== '') {
+        changes.push(`adjust face shape to be more ${enhancements.faceShape}`);
+    }
     
     // Hair
-    if (enhancements.hairColor) changes.push(`change hair color to ${enhancements.hairColor}`);
-    if (enhancements.hairStyle) changes.push(`style hair to be ${enhancements.hairStyle}`);
+    if (enhancements.hairColor && enhancements.hairColor !== '') {
+        changes.push(`change hair color to ${enhancements.hairColor}`);
+    }
+    if (enhancements.hairStyle && enhancements.hairStyle !== '') {
+        changes.push(`style hair to be ${enhancements.hairStyle}`);
+    }
     
-    // Makeup and expression
-    if (enhancements.makeup) changes.push(`apply ${enhancements.makeup} makeup`);
-    if (enhancements.expression) changes.push(`change expression to ${enhancements.expression}`);
+    // Makeup
+    if (enhancements.makeup && enhancements.makeup !== '') {
+        if (enhancements.makeup === 'remove') {
+            changes.push('remove makeup');
+        } else {
+            changes.push(`apply ${enhancements.makeup} makeup`);
+        }
+    }
     
-    // Skin and beauty
-    if (enhancements.skinTone) changes.push(`improve skin tone to ${enhancements.skinTone}`);
-    
-    // Environment
-    if (enhancements.background) changes.push(`change background to ${enhancements.background}`);
-    if (enhancements.lighting) changes.push(`adjust lighting to ${enhancements.lighting}`);
-    if (enhancements.clothing) changes.push(`change clothing to ${enhancements.clothing}`);
+    // Environment (if elements exist)
+    if (enhancements.background && enhancements.background !== '') {
+        changes.push(`change background to ${enhancements.background}`);
+    }
+    if (enhancements.lighting && enhancements.lighting !== '') {
+        changes.push(`adjust lighting to ${enhancements.lighting}`);
+    }
+    if (enhancements.clothing && enhancements.clothing !== '') {
+        changes.push(`change clothing to ${enhancements.clothing}`);
+    }
+    if (enhancements.skinTone && enhancements.skinTone !== '') {
+        changes.push(`improve skin tone to ${enhancements.skinTone}`);
+    }
+    if (enhancements.expression && enhancements.expression !== '') {
+        changes.push(`change expression to ${enhancements.expression}`);
+    }
     
     // Basic adjustments (only include if significantly changed)
     if (Math.abs(enhancements.brightness) > 10) {
@@ -342,5 +368,20 @@ function createPromptFromSelections(enhancements) {
         changes.push(`adjust saturation ${enhancements.saturation > 0 ? 'more vibrant' : 'more muted'}`);
     }
     
+    // Body adjustments (only include if significantly changed)
+    if (Math.abs(enhancements.height) > 5) {
+        changes.push(`adjust height ${enhancements.height > 0 ? 'taller' : 'shorter'}`);
+    }
+    if (Math.abs(enhancements.body) > 5) {
+        changes.push(`adjust body shape ${enhancements.body > 0 ? 'fuller' : 'slimmer'}`);
+    }
+    if (Math.abs(enhancements.posture) > 5) {
+        changes.push('improve posture');
+    }
+    if (Math.abs(enhancements.blemish) > 5) {
+        changes.push('remove blemishes and smooth skin');
+    }
+    
+    console.log('Generated changes:', changes); // Debug log
     return changes.length > 0 ? changes.join(', ') : '';
 }
