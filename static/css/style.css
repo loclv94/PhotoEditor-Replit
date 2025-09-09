@@ -148,6 +148,7 @@
 
 /* AI Prompt styling */
 #enhancementPrompt {
+    color: black;
     border: 2px solid var(--bs-primary);
     border-radius: 8px;
     font-size: 0.95rem;

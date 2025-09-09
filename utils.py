@@ -48,7 +48,7 @@ def get_all_images():
 
 def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt="", source_image_path=None):
     """
-    Apply AI-powered enhancements to an image using Gemini
+    Apply both PIL basic adjustments and AI-powered enhancements to an image
     
     Args:
         original_path: Path to original image
@@ -61,25 +61,103 @@ def enhance_image(original_path, enhanced_path, enhancements, enhancement_prompt
         bool: True if successful, False otherwise
     """
     try:
-        # Initialize Gemini enhancer
-        enhancer = GeminiEnhancer()
+        # Determine input path
+        input_path = source_image_path if source_image_path else original_path
         
-        # Use Gemini AI enhancement (supports conversational editing)
-        success = enhancer.enhance_image(
-            original_path, 
-            enhanced_path, 
-            enhancements, 
-            enhancement_prompt,
-            source_image_path
+        # Check if we have basic adjustments (brightness, contrast, saturation)
+        has_basic_adjustments = (
+            abs(enhancements.get('brightness', 0)) > 0 or
+            abs(enhancements.get('contrast', 0)) > 0 or
+            abs(enhancements.get('saturation', 0)) > 0
         )
         
-        if success:
-            app.logger.info(f"Enhanced image saved to {enhanced_path}")
-            return True
+        # Check if we have AI features or text prompt
+        has_ai_features = (
+            enhancement_prompt.strip() or
+            any(enhancements.get(key) for key in ['eyeColor', 'hairColor', 'makeup', 'background', 'lighting', 'clothing', 'skinTone', 'expression'])
+        )
+        
+        temp_path = None
+        
+        # Step 1: Apply basic PIL adjustments first if needed
+        if has_basic_adjustments:
+            temp_path = enhanced_path.replace('.', '_temp.')
+            success = _apply_basic_adjustments(input_path, temp_path, enhancements)
+            if not success:
+                return False
+            input_path = temp_path  # Use adjusted image as input for AI
+        
+        # Step 2: Apply AI enhancements if needed
+        if has_ai_features:
+            enhancer = GeminiEnhancer()
+            success = enhancer.enhance_image(
+                original_path,  # Always pass original for reference
+                enhanced_path, 
+                enhancements, 
+                enhancement_prompt,
+                input_path  # This will be temp_path if we did basic adjustments
+            )
+            if not success:
+                return False
+        elif has_basic_adjustments and temp_path:
+            # Only basic adjustments, move temp file to final destination
+            os.rename(temp_path, enhanced_path)
         else:
-            app.logger.error("Image enhancement failed")
-            return False
-            
+            # No adjustments requested, just copy original
+            Image.open(input_path).save(enhanced_path)
+        
+        # Clean up temp file if it exists
+        if temp_path and os.path.exists(temp_path) and temp_path != enhanced_path:
+            os.remove(temp_path)
+        
+        app.logger.info(f"Enhanced image saved to {enhanced_path}")
+        return True
+        
     except Exception as e:
         app.logger.error(f"Error enhancing image: {str(e)}")
+        return False
+
+def _apply_basic_adjustments(input_path, output_path, enhancements):
+    """
+    Apply basic PIL adjustments (brightness, contrast, saturation)
+    """
+    try:
+        # Load image
+        image = Image.open(input_path)
+        if image.mode == 'RGBA':
+            image = image.convert('RGB')
+        
+        # Apply brightness adjustment
+        brightness_value = enhancements.get('brightness', 0)
+        if brightness_value != 0:
+            # Convert from -50/+50 range to 0.5/1.5 range
+            brightness_factor = 1.0 + (brightness_value / 100.0)
+            brightness_factor = max(0.1, min(2.0, brightness_factor))  # Clamp to reasonable range
+            enhancer = ImageEnhance.Brightness(image)
+            image = enhancer.enhance(brightness_factor)
+        
+        # Apply contrast adjustment  
+        contrast_value = enhancements.get('contrast', 0)
+        if contrast_value != 0:
+            # Convert from -50/+50 range to 0.5/1.5 range
+            contrast_factor = 1.0 + (contrast_value / 100.0)
+            contrast_factor = max(0.1, min(2.0, contrast_factor))  # Clamp to reasonable range
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(contrast_factor)
+            
+        # Apply saturation adjustment
+        saturation_value = enhancements.get('saturation', 0)  
+        if saturation_value != 0:
+            # Convert from -50/+50 range to 0.5/1.5 range
+            saturation_factor = 1.0 + (saturation_value / 100.0)
+            saturation_factor = max(0.0, min(2.0, saturation_factor))  # Clamp to reasonable range
+            enhancer = ImageEnhance.Color(image)
+            image = enhancer.enhance(saturation_factor)
+        
+        # Save adjusted image
+        image.save(output_path)
+        return True
+        
+    except Exception as e:
+        app.logger.error(f"Error applying basic adjustments: {str(e)}")
         return False

@@ -414,16 +414,7 @@ function createPromptFromSelections(enhancements) {
         changes.push(`change expression to ${enhancements.expression}`);
     }
     
-    // Basic adjustments (only include if significantly changed)
-    if (Math.abs(enhancements.brightness) > 10) {
-        changes.push(`adjust brightness ${enhancements.brightness > 0 ? 'brighter' : 'darker'}`);
-    }
-    if (Math.abs(enhancements.contrast) > 10) {
-        changes.push(`adjust contrast ${enhancements.contrast > 0 ? 'higher' : 'lower'}`);
-    }
-    if (Math.abs(enhancements.saturation) > 10) {
-        changes.push(`adjust saturation ${enhancements.saturation > 0 ? 'more vibrant' : 'more muted'}`);
-    }
+    // Basic adjustments are now handled by PIL, not included in AI prompt
     
     // Body adjustments (only include if significantly changed)
     if (Math.abs(enhancements.height) > 5) {
