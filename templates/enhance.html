@@ -40,13 +40,13 @@
         <div class="row">
             <!-- Enhancement Controls -->
             <div class="col-lg-4 mb-4">
-                <div class="card">
+                <div class="card sidebar-card">
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-sliders-h me-2"></i>Enhancement Settings
                         </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body sidebar-body">
                         <form id="enhanceForm">
                             <input type="hidden" id="filename" value="{{ original_filename }}">
                             
@@ -62,22 +62,9 @@
                                 </div>
                             </div>
                             
-                            <!-- Continue Editing Section (shown after first enhancement) -->
-                            {% if has_enhanced %}
-                            <div class="mb-4" id="continueSection">
-                                <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-outline-primary" id="continueEditBtn" data-filename="{{ original_filename }}">
-                                        <i class="fas fa-comments me-2"></i>Continue Editing
-                                    </button>
-                                </div>
-                                <div class="form-text text-center">
-                                    Make additional changes to your enhanced image
-                                </div>
-                            </div>
-                            {% endif %}
 
                             <!-- Facial Features Section -->
-                            <div class="enhancement-section mb-4">
+                            <div class="enhancement-section">
                                 <h6 class="text-primary mb-3"><i class="fas fa-user-circle me-2"></i>Facial Features</h6>
                                 
                                 <div class="row mb-3">
@@ -128,7 +115,7 @@
                             </div>
 
                             <!-- Hair & Style Section -->
-                            <div class="enhancement-section mb-4">
+                            <div class="enhancement-section">
                                 <h6 class="text-success mb-3"><i class="fas fa-cut me-2"></i>Hair & Style</h6>
                                 
                                 <div class="row mb-3">
@@ -166,7 +153,7 @@
                             </div>
 
                             <!-- Body & Posture Section -->
-                            <div class="enhancement-section mb-4">
+                            <div class="enhancement-section">
                                 <h6 class="text-warning mb-3"><i class="fas fa-male me-2"></i>Body & Posture</h6>
                                 
                                 <div class="mb-3">
@@ -201,7 +188,7 @@
                             </div>
 
                             <!-- Skin & Beauty Section -->
-                            <div class="enhancement-section mb-4">
+                            <div class="enhancement-section">
                                 <h6 class="text-info mb-3"><i class="fas fa-spa me-2"></i>Skin & Beauty</h6>
                                 
                                 <div class="mb-3">
@@ -236,7 +223,7 @@
                             </div>
 
                             <!-- Environment Section -->
-                            <div class="enhancement-section mb-4">
+                            <div class="enhancement-section">
                                 <h6 class="text-secondary mb-3"><i class="fas fa-image me-2"></i>Environment & Style</h6>
                                 
                                 <div class="row mb-3">
@@ -276,8 +263,8 @@
                             </div>
 
                             <!-- Basic Adjustments Section -->
-                            <div class="enhancement-section mb-4">
-                                <h6 class="text-dark mb-3"><i class="fas fa-sliders-h me-2"></i>Basic Adjustments</h6>
+                            <div class="enhancement-section">
+                                <h6 class="text-red mb-3"><i class="fas fa-sliders-h me-2"></i>Basic Adjustments</h6>
                                 
                                 <div class="mb-3">
                                     <label class="form-label small">Brightness</label>
@@ -310,23 +297,25 @@
                                 </div>
                             </div>
 
+                            <!-- Buttons moved to bottom via CSS -->
+                        </form>
+                        
+                        <!-- Fixed buttons at bottom -->
+                        <div class="sidebar-buttons">
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary" id="enhanceBtn">
+                                {% if has_enhanced %}
+                                <button type="button" class="btn btn-outline-primary" id="continueEditBtn" data-filename="{{ original_filename }}">
+                                    <i class="fas fa-comments me-2"></i>Continue Editing
+                                </button>
+                                {% endif %}
+                                <button type="submit" form="enhanceForm" class="btn btn-primary" id="enhanceBtn">
                                     <i class="fas fa-robot me-2"></i>Enhance with AI
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="resetBtn">
                                     <i class="fas fa-undo me-2"></i>Reset All Settings
                                 </button>
                             </div>
-                            
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Uses Google Gemini AI for conversational photo enhancement. 
-                                    Start with any request, then continue editing with follow-up instructions.
-                                </small>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -340,6 +329,11 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('gallery') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Gallery
+                            </a>
+                        </div>
                         {% if has_enhanced %}
                             <div class="comparison-container" id="comparisonContainer">
                                 <img src="{{ url_for('uploaded_file', filename=original_filename) }}" 
@@ -370,11 +364,6 @@
                     </div>
                 </div>
 
-                <div class="text-center mt-3">
-                    <a href="{{ url_for('gallery') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Gallery
-                    </a>
-                </div>
             </div>
         </div>
     </div>
